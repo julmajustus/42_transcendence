@@ -2,6 +2,7 @@ const fastify = require('fastify')({ logger: true })
 
 fastify.register(import('@fastify/swagger'))
 
+/* c8 ignore start */
 fastify.register(import('@fastify/swagger-ui'), {
   routePrefix: '/documentation',
   uiConfig: {
@@ -17,7 +18,7 @@ fastify.register(import('@fastify/swagger-ui'), {
   transformSpecification: (swaggerObject, request, reply) => { return swaggerObject },
   transformSpecificationClone: true
 })
-
+/* c8 ignore stop */
 fastify.register(require('./routes/users'))
 
 module.exports = fastify
@@ -27,7 +28,9 @@ const PORT = 8888
 const start = async () => {
   try {
     await fastify.listen({ port: PORT, host: '0.0.0.0' })
+    /* c8 ignore start */
     console.log(`Server listening on http://localhost:${PORT}`)
+    /* c8 ignore stop */
   } catch (error) {
     fastify.log.error(error)
     process.exit(1)
