@@ -18,7 +18,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Build docker images
-        run: docker-compose build
+        run: docker compose build
 
       - name: Run tests in backend container
         run: docker-compose run --rm backend npm test
