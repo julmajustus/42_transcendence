@@ -6,7 +6,7 @@
 //   By: jmakkone <jmakkone@student.hive.fi>        +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2025/04/03 01:56:01 by jmakkone          #+#    #+#             //
-//   Updated: 2025/04/03 02:00:00 by jmakkone         ###   ########.fr       //
+//   Updated: 2025/04/03 02:11:50 by jmakkone         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -15,9 +15,9 @@ const { spawn } = require('child_process');
 const net = require('net');
 
 t.test('server.js fails to bind port -> triggers catch block', t => {
-  // 1) Occupy port 8888 so the second server can’t bind
+  // 1) Occupy port 9999 so the second server can’t bind
   const dummyServer = net.createServer();
-  dummyServer.listen(0, '0.0.0.0', () => {
+  dummyServer.listen(9999, '0.0.0.0', () => {
     // 2) Now spawn server.js in a child process
     const child = spawn('node', ['server.js'], {
       env: {
@@ -45,7 +45,7 @@ t.test('server.js fails to bind port -> triggers catch block', t => {
   });
 
   dummyServer.on('error', err => {
-    t.fail('Failed to occupy port 0: ' + err.message);
+    t.fail('Failed to occupy port 9999: ' + err.message);
     t.end();
   });
 });
