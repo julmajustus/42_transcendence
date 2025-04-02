@@ -20,6 +20,8 @@ fastify.register(import('@fastify/swagger-ui'), {
 
 fastify.register(require('./routes/users'))
 
+module.exports = fastify
+
 const PORT = 8888
 
 const start = async () => {
@@ -31,5 +33,6 @@ const start = async () => {
     process.exit(1)
   }
 }
-
-start()
+if (require.main == module) {
+	start()
+}
