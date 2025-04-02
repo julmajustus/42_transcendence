@@ -5,6 +5,7 @@ on:
     branches: [unit-test-setup]
   pull_request:
     branches: [unit-test-setup]
+  workflow_dispatch:
 
 jobs:
   test:
