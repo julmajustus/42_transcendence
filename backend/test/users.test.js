@@ -6,14 +6,15 @@
 //   By: jmakkone <jmakkone@student.hive.fi>        +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2025/04/02 16:28:11 by jmakkone          #+#    #+#             //
-//   Updated: 2025/04/02 16:28:12 by jmakkone         ###   ########.fr       //
+//   Updated: 2025/04/02 17:23:54 by jmakkone         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
 const t = require('tap');
 const fastify = require('../server');
+const db = require('../db');
 
-let registeredUserId; // Will hold the ID of the newly registered user
+let registeredUserId;
 
 t.test('POST /user/register registers a new user', async t => {
   const newUser = {
@@ -78,4 +79,16 @@ t.test('GET /users returns a list including the new user', async t => {
   const user = payload.find(u => u.id === Number(registeredUserId));
   t.ok(user, 'The newly registered (and updated) user should be in the list');
   t.end();
+});
+
+// Teardown: clean up the test user from the database after tests run.
+t.teardown(() => {
+  // Remove the test user by email.
+  db.run('DELETE FROM users WHERE email = ?', ['testuser@example.com'], function (err) {
+    if (err) {
+      console.error('Error cleaning up test user:', err);
+    } else {
+      console.log(`Cleanup: Removed ${this.changes} test user(s)`);
+    }
+  });
 });
