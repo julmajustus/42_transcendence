@@ -2,9 +2,9 @@ name: Dockerized CI
 
 on:
   push:
-    branches: [main]
+    branches: [unit-test-setup]
   pull_request:
-    branches: [main]
+    branches: [unit-test-setup]
 
 jobs:
   test:
