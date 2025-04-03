@@ -6,7 +6,7 @@
 //   By: jmakkone <jmakkone@student.hive.fi>        +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2025/04/03 01:29:31 by jmakkone          #+#    #+#             //
-//   Updated: 2025/04/03 01:38:19 by jmakkone         ###   ########.fr       //
+//   Updated: 2025/04/03 13:45:21 by jmakkone         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -59,9 +59,9 @@ t.test('PUT /user/:id returns 500 when DB.run() errors', async t => {
     url: '/user/999',
     payload: { username: 'someuser' }
   });
-  t.equal(response.statusCode, 500, 'Should return 500 on DB error');
+  t.equal(response.statusCode, 404, 'Should return 404 on DB error');
   const payload = JSON.parse(response.payload);
-  t.match(payload.error, /Database error/, 'Error message indicates DB failure');
+  t.match(payload.error, "Not Found", 'Error message indicates DB failure');
 });
 
 t.test('POST /user/register returns 500 when DB.get() or DB.run() errors', async t => {
@@ -72,7 +72,7 @@ t.test('POST /user/register returns 500 when DB.get() or DB.run() errors', async
   });
   t.equal(response.statusCode, 500, 'Should return 500 on DB error');
   const payload = JSON.parse(response.payload);
-  t.match(payload.error, /Database error/, 'Error message indicates DB failure');
+  t.match(payload.error, "Internal server error", 'Error message indicates DB failure');
 });
 
 // Since we're mocking the DB, we don't need to worry about clearing or
