@@ -1,10 +1,10 @@
 #!/bin/bash
 
-echo "Waiting for Fastify server to be ready..."
-until curl -s http://localhost:8888/users | grep -q "[]" || curl -s http://localhost:8888/users | grep -q "error"; do
-  echo "Waiting for server to be ready"
-  sleep 2
-done
+# echo "Waiting for Fastify server to be ready..."
+# until curl -s http://localhost:8888/users | grep -q "[]" || curl -s http://localhost:8888/users | grep -q "error"; do
+#   echo "Waiting for server to be ready"
+#   sleep 2
+# done
 
 echo "Fastify server is up! Creating test users..."
 
