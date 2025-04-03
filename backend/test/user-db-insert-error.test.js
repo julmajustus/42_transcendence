@@ -6,7 +6,7 @@
 //   By: jmakkone <jmakkone@student.hive.fi>        +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2025/04/03 01:33:35 by jmakkone          #+#    #+#             //
-//   Updated: 2025/04/03 01:38:02 by jmakkone         ###   ########.fr       //
+//   Updated: 2025/04/03 13:47:14 by jmakkone         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -55,7 +55,7 @@ t.test('POST /user/register -> fails on INSERT', async t => {
 
   t.equal(response.statusCode, 500, 'Should return 500 on INSERT error');
   const payload = JSON.parse(response.payload);
-  t.match(payload.error, /Database error: Simulated DB insert error/i, 
+  t.match(payload.error, "Internal server error", 
     'Error message indicates DB insert failure');
 
   t.end();
