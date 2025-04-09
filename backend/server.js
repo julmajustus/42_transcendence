@@ -55,6 +55,8 @@ fastify.register(require('./routes/auth'))
 
 fastify.register(require('./routes/users'))
 
+fastify.register(require('./routes/game'))
+
 module.exports = fastify
 
 const PORT = 8888
