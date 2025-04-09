@@ -6,14 +6,14 @@
 //   By: pleander <pleander@student.hive.fi>        +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2025/04/04 09:40:51 by pleander          #+#    #+#             //
-//   Updated: 2025/04/04 10:44:27 by pleander         ###   ########.fr       //
+//   Updated: 2025/04/10 00:11:12 by jmakkone         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
 const { Game, Side } = require('./game.js');
 const Websocket = require('ws');
 
-const wss = new Websocket.Server({port: 9000});
+//const wss = new Websocket.Server({port: 9000});
 
 const ErrorType = {
 	GAME_DOES_NOT_EXIST_ERROR: 0,
@@ -86,7 +86,7 @@ class GameServer {
 		setInterval(() => this.broadcastStates(), 1000 / 30); // 30 FPS
 	}
 
-	run() {
+	run(wss) {
 		this.setupIntervals();
 		try {
 			wss.on('connection', (ws) => {
@@ -117,4 +117,16 @@ class GameServer {
 	}
 };
 
-module.exports = { GameServer };
+function startGameServer(port = 9000) {
+  if (global.__GAME_SERVER_INSTANCE__) {
+    console.log("Game server is already running, not starting a new instance.");
+    return global.__GAME_SERVER_INSTANCE__;
+  }
+  const wss = new Websocket.Server({ port });
+  const server = new GameServer();
+  server.run(wss);
+  global.__GAME_SERVER_INSTANCE__ = server;
+  return server;
+}
+
+module.exports = { GameServer,  startGameServer };

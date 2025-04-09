@@ -1,9 +1,13 @@
-const { GameServer } = require('../game/game_server')
+const { startGameServer } = require('../game/game_server')
 
-const game_server = new GameServer();
-game_server.run();
-
+//const game_server = new GameServer();
+//game_server.run();
 const createNewGame = (request, reply) => {
+	const game_server = global.__GAME_SERVER_INSTANCE__;
+	if (!game_server) {
+		return reply.status(500).send({ error: 'Game server is not running' });
+	}
+
 	const { player1_id, player2_id } = request.body;
 	try {
 		const game_id = game_server.createGame(player1_id, player2_id);
@@ -17,6 +21,10 @@ const createNewGame = (request, reply) => {
 };
 
 const listGames = (request, reply) => {
+	const game_server = global.__GAME_SERVER_INSTANCE__;
+	if (!game_server) {
+		return reply.status(500).send({ error: 'Game server is not running' });
+	}
 	let games = [];
 	for (const [key, value] of game_server.games) {
 		games.push({
@@ -30,6 +38,10 @@ const listGames = (request, reply) => {
 
 
 const getGame = (request, reply) => {
+	const game_server = global.__GAME_SERVER_INSTANCE__;
+	if (!game_server) {
+		return reply.status(500).send({ error: 'Game server is not running' });
+	}
 	const { id } = request.params;
 	if (!game_server.games.has(Number(id))) {
 		return reply.status(404).send({error: `Game with id ${id} does not exist`});

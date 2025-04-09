@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const { startGameServer } = require('./game/game_server')
 const fastify = require('fastify')({
 	logger: true,
 	// https: {
@@ -59,6 +60,7 @@ fastify.register(require('./routes/game'))
 
 module.exports = fastify
 
+
 const PORT = 8888
 
 const start = async () => {
@@ -75,4 +77,5 @@ const start = async () => {
 
 if (require.main == module) {
 	start()
+	startGameServer(9000);
 }
