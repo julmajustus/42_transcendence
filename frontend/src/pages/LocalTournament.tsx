@@ -538,7 +538,7 @@ const LocalTournament = () => {
           style={{ display: 'none' }}
           width={1} height={1}
         />
-        <h1>Game #{currentGameId}</h1>
+        {/* <h1>Game #{currentGameId}</h1> */}
         <GameCanvas
           ref={canvasRef}
           width={DEFAULT_WIDTH}
@@ -616,7 +616,7 @@ const LocalTournament = () => {
   if (addedPlayers.length === 4) {
     return (
       <TournamentContainer>
-    <h1>Tournament #{tourneyId} Bracket</h1>
+    <h1>Tournament {/* #{tourneyId} */} Bracket</h1>
       {winnerName && <Status>🎉 {winnerName} wins! 🎉</Status>}
       <p>Select your match to ▶ Play:</p>
 

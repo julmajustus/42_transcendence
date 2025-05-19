@@ -272,7 +272,7 @@ export default function Tournament() {
   if (!started) {
     return (
       <Container>
-        <h1>Tournament Lobby #{tourneyId}</h1>
+        <h1>Tournament Lobby{/*  #{tourneyId} */}</h1>
         <PlayerList>
           {players.map(p => (
             <li key={p.id}>{p.username}</li>
@@ -310,7 +310,7 @@ export default function Tournament() {
     return (
       <Container>
         <canvas id="game-canvas" style={{ display: 'none' }} width={1} height={1} />
-        <h1>Game #{gameId}</h1>
+        {/* <h1>Game #{gameId}</h1> */}
         <GameCanvas ref={canvasRef} width={DEFAULT_WIDTH} height={DEFAULT_HEIGHT} tabIndex={0} />
       </Container>
     )
@@ -320,7 +320,7 @@ export default function Tournament() {
 
   return (
     <Container>
-      <h1>Tournament #{tourneyId} Bracket</h1>
+      <h1>Tournament {/* #{tourneyId}  */}Bracket</h1>
       {winnerName && <Status>🎉 {winnerName} wins! 🎉</Status>}
       <p>Select your match to ▶ Play:</p>
 

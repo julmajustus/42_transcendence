@@ -51,8 +51,9 @@ const Matchmaking = () => {
 		}
 		
 		const renderer = createGameRendererAdapter(gameId, user.authToken, canvas, 'multi');
+		rendererRef.current = renderer
 		
-		canvasRef.current.focus();
+		canvas.focus();
 
 		const keyDown = (e: KeyboardEvent) => {
 			// only intercept arrow keys when canvas is focused
@@ -80,8 +81,9 @@ const Matchmaking = () => {
 		renderer.start();
 
 		renderer.onGameOver = async (winner: { id: number }) => {
-			setGameId(null);
-			setPendingId(null);
+			// setGameId(null);
+			// setPendingId(null);
+			setTimeout(() => navigate("/dashboard"), 3_000);
 			try {
 				// fetch the winner’s username
 				const resp = await fetch(`${API_URL}/user/${winner.id}`, {
@@ -97,9 +99,11 @@ const Matchmaking = () => {
 
 		return () => {
 			renderer?.socket?.close();
+			setGameId(null);
+			setPendingId(null);
 			document.removeEventListener('keydown', keyDown);
 			document.removeEventListener('keyup', keyUp);
-			setTimeout(() => {navigate('/'); }, 5_000);
+			// setTimeout(() => {navigate('/'); }, 5_000);
 		};
 	}, [gameId, user?.authToken]);
 
@@ -151,20 +155,20 @@ const Matchmaking = () => {
 		width={1}
 		height={1}
 		/>
-		<h1>Pong Game</h1>
+		{/* <h1>Pong Game</h1> */}
 
 		{!gameId && pendingId && (
 			<Status>Waiting for another player to join…</Status>
 		)}
 
-		{winnerName && (
+{/* 		{winnerName && (
 			<Status>🎉 {winnerName} wins! Well done, gg… 🎉</Status>
-		)}
+		)} */}
 	
 		{/* once match is ready */}
 		{gameId && (
 			<>
-			<Status>Game ID: {gameId}</Status>
+			{/* <Status>Game ID: {gameId}</Status> */}
 			<GameCanvas
 			ref={canvasRef}
 			width={DEFAULT_WIDTH}

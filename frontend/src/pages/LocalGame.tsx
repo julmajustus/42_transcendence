@@ -343,7 +343,7 @@ const LocalGame = () => {
 			document.removeEventListener('keyup', keyUpHandler);
 
 			rendererRef.current = null;
-			setTimeout(() => { navigate('/dashboard'); }, 3_000);
+			// setTimeout(() => { navigate('/dashboard'); }, 3_000);
 		};
 	}, [addedPlayers, user?.authToken, creatorId, readyToRender]);
 
