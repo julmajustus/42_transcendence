@@ -139,8 +139,20 @@ const GoogleButton = styled.button`
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const username = formData.get('username') as string;
-  const password = formData.get('password') as string;
+  const username = (formData.get('username') || '').toString().trim()
+  const password = (formData.get('password') || '').toString();
+
+  const userRe = /^[A-Za-z0-9_]{3,20}$/
+  const errors: string[] = []
+  if (!userRe.test(username))
+    errors.push('Username must be 3–20 characters and contain only letters, numbers, or underscore')
+  if (password.length === 0)
+    errors.push('Password cannot be empty')
+  if (errors.length) {
+    errors.forEach((msg) => toast.error(msg));
+    return null;
+  }
+
   try {
     const response = await customFetch.post('/user/login', {
       username,

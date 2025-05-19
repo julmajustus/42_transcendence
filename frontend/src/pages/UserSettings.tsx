@@ -310,22 +310,33 @@ const UserSettings = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
+		const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		const userRe = /^[A-Za-z0-9_]{3,20}$/
+		const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+
 		if (newPassword && newPassword !== confirmPassword) {
 			toast.error('Passwords do not match');
 			return null;
 		}
-
 		if (newEmail && newEmail !== confirmEmail) {
 			toast.error('Emails do not match');
 			return null;
 		}
-
 		if (newUsername) {
-			const alphanumericRegex = /^[a-zA-Z0-9_.!-]+$/;
-			if (!alphanumericRegex.test(newUsername)) {
-				toast.error(
-					"Username must contain only alphanumeric characters and special characters (_, ., !, -).",
-				);
+			if (!userRe.test(newUsername)) {
+				toast.error('Username must be 3–20 characters and contain only letters, numbers, or underscore');
+				return;
+			}
+		}
+		if (newPassword) {
+			if (!passRe.test(newPassword)) {
+				toast.error('New password must be ≥8 chars, include at least one uppercase letter, one lowercase letter, and one digit');
+				return;
+			}
+		}
+		if (newEmail) {
+			if (!emailRe.test(newEmail)) {
+				toast.error('Please enter a valid email address');
 				return;
 			}
 		}

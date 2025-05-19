@@ -75,9 +75,21 @@ const registerUserSchema = {
 		body: {
 			type: 'object',
 			properties: {
-				username: { type: 'string'},
-				password: { type: 'string'},
-				email: { type: 'string' },
+				username: {
+					type: 'string',
+					minLength: 3,
+					maxLength: 20,
+					pattern: '^[A-Za-z0-9_]+$'
+				},
+				password: {
+					type: 'string',
+					minLength: 8,
+					pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$'
+				},
+				email: {
+					type: 'string',
+					format: 'email',
+				},
 			},
 			required: ['username', 'password', 'email' ],
 		},
@@ -95,8 +107,16 @@ const loginUserSchema = {
 		body: {
 			type: 'object',
 			properties: {
-				username: { type: 'string'},
-				password: { type: 'string'},
+				username: {
+					type: 'string',
+					minLength: 3,
+					maxLength: 20,
+					pattern: '^[A-Za-z0-9_]+$'
+				},
+				password: {
+					type: 'string',
+					minLength: 1
+				},
 			},
 			required: ['username', 'password']
 		},
@@ -215,11 +235,29 @@ function usersRoutes(fastify, options, done) {
 			body: {
 				type: 'object',
 				properties: {
-					currentPassword: { type: 'string' },
-					newPassword: { type: 'string' },
-					newUsername: { type: 'string' },
-					twoFA: { type: 'integer'},
-					newEmail: { type: 'string' },
+					currentPassword: {
+						type: 'string',
+						minLength: 1
+					},
+					newPassword: {
+						type: 'string',
+						minLength: 8,
+						pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$'
+					},
+					newUsername: {
+						type: 'string',
+						minLength: 3,
+						maxLength: 20,
+						pattern: '^[A-Za-z0-9_]+$'
+					},
+					twoFA: {
+						type: 'integer',
+						enum: [0, 1]
+					},
+					newEmail: {
+						type: 'string',
+						format: 'email'
+					},
 				},
 				required: ['currentPassword'],
 				anyOf: [

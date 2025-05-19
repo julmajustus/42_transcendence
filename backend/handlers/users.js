@@ -51,11 +51,6 @@ const getUser = (request, reply) => {
 const registerUser = async (request, reply) => {
 	const { username, email, password } = request.body;
 	request.log.info(`Received registration request: ${username}`);
-	const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-	if (!isValid) {
-		request.log.warn('Invalid email');
-		return reply.status(400).send({ error: "User provided wrong email" });
-	}
 	try {
 		const existingUser = await new Promise((resolve, reject) => {
 			db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
