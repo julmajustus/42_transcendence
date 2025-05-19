@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/16 15:56:56 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/19 09:51:58 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -340,6 +340,7 @@ class Game {
 	}
 
 	refreshGame() {
+		const roundsToWin = Math.ceil(this.total_rounds / 2)
 		this.processInputs();
 		if (this.gameState === GameState.NOT_STARTED)
 		{
@@ -353,7 +354,8 @@ class Game {
 		else if (this.gameState === GameState.ACTIVE) {
 			if (this.moveBall()) {
 				this.finished_rounds += 1;
-				if (this.finished_rounds >= this.total_rounds) {
+				// if (this.finished_rounds >= this.total_rounds) {
+				if (this.players[0].score >= roundsToWin || this.players[1].score >= roundsToWin) {
 					this.gameState = GameState.FINSIHED;
 					if (this.players[0].score > this.players[1].score) {
 						this.winner = this.players[0];

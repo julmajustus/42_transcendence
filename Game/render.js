@@ -227,7 +227,10 @@ export class GameRenderer {
 		this.ctx.fillText("Waiting for players", this.board_width / 2, this.board_height / 2);
 
 		this.ctx.font = "15px 'Press Start 2P'";
-		this.ctx.fillText("Press UP and DOWN to confirm", this.board_width / 2, this.board_height / 2 + 30);
+		this.ctx.fillText("In a best of 5 rounds, the first to 3 wins", this.board_width / 2, this.board_height / 2 + 30);
+
+		this.ctx.font = "15px 'Press Start 2P'";
+		this.ctx.fillText("Press UP and DOWN to confirm", this.board_width / 2, this.board_height / 2 + 100);
 
 		this.ctx.font = "15px Press Start 2P";
 		if (players[0].ready) {
