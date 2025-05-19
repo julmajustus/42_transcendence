@@ -377,7 +377,12 @@ const UserSettings = () => {
 		return (
 			<Container>
 				<FormContainer onSubmit={handleSubmit}>
-				<CloseButton type="button" onClick={() => setChangingUsername(false)}>&times;</CloseButton>
+				<CloseButton type="button" onClick={() => {
+					setChangingUsername(false),
+					setNewUsername(''),
+					setCurrentPassword('')
+				}}
+				>&times;</CloseButton>
 				<Title>Change username</Title>
 				<FormInput
 					type="text"
@@ -406,7 +411,13 @@ const UserSettings = () => {
 		return (
 			<Container>
 				<FormContainer onSubmit={handleSubmit}>
-				<CloseButton type="button" onClick={() => setChangingPassword(false)}>&times;</CloseButton>
+				<CloseButton type="button" onClick={() => {
+					setChangingPassword(false),
+					setCurrentPassword(''),
+					setNewPassword(''),
+					setConfirmPassword('')
+				}}
+				>&times;</CloseButton>
 				<Title>Change password</Title>
 					<FormInput
 						type="password"
@@ -445,6 +456,7 @@ const UserSettings = () => {
 				<CloseButton type="button" onClick={() => {
 					setChangingtwoFA(false);
 					setTwoFAEnabled(prev => !prev);
+					setCurrentPassword('')
 				}}
 				>
 					&times;
@@ -470,7 +482,13 @@ const UserSettings = () => {
 		return (
 			<Container>
 				<FormContainer onSubmit={handleSubmit}>
-				<CloseButton type="button" onClick={() => setChangingPassword(false)}>&times;</CloseButton>
+				<CloseButton type="button" onClick={() => {
+					setChangingEmail(false),
+					setNewEmail(''),
+					setConfirmEmail('')
+					setCurrentPassword('')
+				}}
+				>&times;</CloseButton>
 				<Title>Change email</Title>
 					<FormInput
 						type="email"
