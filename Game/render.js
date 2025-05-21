@@ -229,8 +229,15 @@ export class GameRenderer {
 		this.ctx.font = "15px 'Press Start 2P'";
 		this.ctx.fillText("In a best of 5 rounds, the first to 3 wins", this.board_width / 2, this.board_height / 2 + 30);
 
-		this.ctx.font = "15px 'Press Start 2P'";
-		this.ctx.fillText("Press UP and DOWN to confirm", this.board_width / 2, this.board_height / 2 + 100);
+		if (this.game_type === 'multi') {
+			this.ctx.font = "15px 'Press Start 2P'";
+			this.ctx.fillText("Press UP and DOWN to confirm", this.board_width / 2, this.board_height / 2 + 100);
+		}
+		if (this.game_type === 'single') {
+			this.ctx.font = "15px 'Press Start 2P'";
+			this.ctx.fillText("Press W and S to confirm", this.board_width / 4, this.board_height / 2 + 100);
+			this.ctx.fillText("Press UP and DOWN to confirm", this.board_width * 3 / 4, this.board_height / 2 + 100);
+		}
 
 		this.ctx.font = "15px Press Start 2P";
 		if (players[0].ready) {
@@ -257,7 +264,7 @@ export class GameRenderer {
 	}
 
 	drawResult(winner) {
-		this.ctx.font = "30px 'Press Start 2P'";
+		this.ctx.font = "20px 'Press Start 2P'";
 		this.ctx.textAlign = "center"
 		let text;
 		if (winner == null) {
@@ -266,12 +273,12 @@ export class GameRenderer {
 		else {
 			if (this.game_type === "multi") {
 				// Todo: Display nickname instead of id
-				text = `Player ${winner.username} won the game`;
+				text = `${winner.username} won the game`;
 			}
 			if (this.game_type === "single") {
 				// Hacky, single player ids are -1 and -2, i.e. somthing that's not a real id
 				// text = `Player ${winner.id * -1} won the game`;
-				text = `Player ${winner.username} won the game`;
+				text = `${winner.username} won the game`;
 			}
 		}
 		this.ctx.fillText(text, this.board_width / 2, this.board_height / 2);
