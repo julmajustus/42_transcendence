@@ -193,7 +193,7 @@ const Login: React.FC = () => {
   const loginProcessed = useRef(false);
 
   useEffect(() => {
-    console.log(actionData?.initialAuth);
+    // console.log(actionData?.initialAuth);
 
     // Handle 2FA required response
     if (actionData?.initialAuth) {
