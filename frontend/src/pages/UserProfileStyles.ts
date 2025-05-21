@@ -242,6 +242,7 @@ export const MatchResult = styled.span<{ result: 'win' | 'loss' }>`
 export const MatchScore = styled.div`
   font-family: 'Press Start 2P', cursive;
   font-size: 1rem;
+  margin-right: 1rem;
 `;
 
 export const MatchDate = styled.div`
