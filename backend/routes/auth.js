@@ -81,5 +81,5 @@ module.exports = fp(async function(fastify, opts) {
 		}
 	})
 
-	fastify.post('/verify_2fa_code', verify2FACodeSchema)
+	fastify.post('/api/verify_2fa_code', verify2FACodeSchema)
 })

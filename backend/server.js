@@ -25,7 +25,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 require('dotenv').config();
-const ALLOWED_ORIGINS = [
+/* const ALLOWED_ORIGINS = [
 	'http://localhost:5173',
 	process.env.VITE_FRONTEND_URL_FOR_CORS,
 ].filter(Boolean); // drop any undefined
@@ -45,7 +45,7 @@ fastify.register(require('@fastify/cors'), {
 	},
 	methods: ['GET', 'POST', 'PUT', 'DELETE'],
 	credentials: true,
-});
+}); */
 
 fastify.register(import('@fastify/swagger'), {
 	swagger: {
@@ -90,17 +90,17 @@ fastify.register(require('@fastify/static'), {
 fastify.register(require('@fastify/multipart'))
 fastify.register(require('@fastify/websocket'))
 
-fastify.register(require('./routes/auth'))
+fastify.register(require('./routes/auth'), { prefix: '/api' })
 
-fastify.register(require('./routes/users'))
+fastify.register(require('./routes/users'), { prefix: '/api' })
 
-fastify.register(require('./routes/google'))
+fastify.register(require('./routes/google'), { prefix: '/api' })
 
-fastify.register(require('./routes/game'))
+fastify.register(require('./routes/game'), { prefix: '/api' })
 
-fastify.register(require('./routes/tournaments'))
+fastify.register(require('./routes/tournaments'), { prefix: '/api' })
 
-fastify.register(require('./routes/matchmaking'));
+fastify.register(require('./routes/matchmaking'), { prefix: '/api' });
 
 module.exports = fastify
 

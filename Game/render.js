@@ -39,7 +39,19 @@ export class GameRenderer {
 			wsUrl ||
 			`ws://${server_uri}:${server_port}/ws/game/${game_id}?token=${authToken}`;
 		this.socket = new WebSocket(websocketUrl); */
-		this.socket = new WebSocket(`ws://${server_uri}:${server_port}/${GAME_ENDPOINT}`);
+		// somewhere in your constants or socket-init file
+		const GAME_ENDPOINT = 'game';
+		const WS_PATH      = `/ws/${GAME_ENDPOINT}`;
+
+		// pick the right WS protocol based on page protocol
+		const WS_PROTO = location.protocol === 'https:' ? 'wss' : 'ws';
+
+		// Build your socket URL against the same origin
+		const WS_URL   = `${WS_PROTO}://${location.host}${WS_PATH}`;
+
+		// Usage
+		this.socket = new WebSocket(WS_URL);
+		// this.socket = new WebSocket(`ws://${server_uri}:${server_port}/${GAME_ENDPOINT}`);
 		this.connected = false;
 
 		// game
