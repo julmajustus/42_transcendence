@@ -60,7 +60,8 @@ function googleRoutes(fastify, options, done) {
       },
       scope: ['profile', 'email'],
       startRedirectPath: '/oauth2/google/',
-      callbackUri: `${PROTOCOL}://localhost:${BACKEND_PORT}/oauth2/google/callback`,
+      // callbackUri: `${PROTOCOL}://localhost:${BACKEND_PORT}/oauth2/google/callback`,
+      callbackUri: `https://localhost:8443/api/oauth2/google/callback`,
     });
   }
 

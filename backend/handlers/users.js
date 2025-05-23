@@ -592,7 +592,7 @@ const getCurrentUser = async (request, reply) => {
 	try {
 		const user = await new Promise((resolve, reject) => {
 			db.get(
-				'SELECT id, username, email, avatar, online_status, two_fa FROM users WHERE id = ?',
+				'SELECT id, username, email, avatar, online_status, two_fa, google_id FROM users WHERE id = ?',
 				[userId],
 				(err, row) => {
 					if (err) return reject(err);
@@ -634,7 +634,7 @@ const checkPassword = async(request, reply) => {
 		// Use bcrypt to compare the plain‑text input to the stored hash
 		const passwordsMatch = await bcrypt.compare(inPwd, storedPwd);
 		if (!passwordsMatch) {
-			return reply.status(401).send({ error: 'Invalid password' });
+			return reply.send({ ok: false, error: 'Invalid password' });
 		}
 		// If we get here, the password is correct:
 		return reply.send({ ok: true });

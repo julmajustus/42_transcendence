@@ -266,6 +266,7 @@ const UserSettings = () => {
 	const [changingEmail, setChangingEmail] = useState(false)
 	const [newEmail, setNewEmail] = useState("");
 	const [confirmEmail, setConfirmEmail] = useState("");
+	const [gmailAuth, setGmailAuth] = useState(false)
 
 	useEffect(() => {
 		(async () => {
@@ -280,6 +281,8 @@ const UserSettings = () => {
 			const data = await resp.json();
 			// console.log(data)
 			setTwoFAEnabled(Number(data.two_fa) === 1);
+			if (data.online_status)
+				setGmailAuth(true)
 		} catch (err) {
 			console.error('Failed to fetch 2FA status', err);
 			toast.error('Could not load 2FA status');
@@ -289,6 +292,10 @@ const UserSettings = () => {
 	// console.log('twoFAEnabled: ', twoFAEnabled)
 	
 	const handleToggle2FA = () => {
+		if (gmailAuth === true) {
+			toast.error('2FA is not available ig logged in with google')
+			return
+		}
 		setTwoFAEnabled(prev => !prev)
 		setTimeout(() => {
 			setChangingtwoFA(true)
@@ -298,12 +305,16 @@ const UserSettings = () => {
 	const handleChangeUsername = () => {
 		setChangingUsername(true)
 	}
-
+	
 	const handleChangePassword = () => {
 		setChangingPassword(true)
 	}
-
+	
 	const handleChangeEmail = () => {
+		if (gmailAuth === true) {
+			toast.error('Change email is not possible if logged in with google')
+			return
+		}
 		setChangingEmail(true)
 	}
 
