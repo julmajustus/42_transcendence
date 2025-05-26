@@ -9,6 +9,8 @@ import {
   } from '../utils/GameRendererAdapter';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'
+import { API_URL } from '../config';
+import axios from 'axios';
 
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
@@ -252,7 +254,7 @@ const LocalTournament = () => {
 
   const joinTournament = useCallback(async (playerId: number) => {
     try {
-      const res  = await fetch('http://localhost:8888/tournament/auto', {
+      const res  = await fetch(`${API_URL}/tournament/auto`, {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -264,6 +266,12 @@ const LocalTournament = () => {
         }),
       })
       const body = await res.json()
+      // const res = await customFetch.post('/tournament/auto', { // for some reason customFetch not working
+      //   player_id: playerId,
+      //   game_type: 'local',
+      // })
+      // const body = res.data
+      console.log(body)
       if (!res.ok) throw new Error(body.error || 'Unknown error')
 
       setTourneyId(body.tournament_id)
@@ -341,12 +349,17 @@ const LocalTournament = () => {
         setPassword('');
         setAddedPlayers([...addedPlayers, selected]);
       } else {
-        alert("Invalid password!");
+        toast.error('Passwords do not match');
       }
-    } catch (err) {
-      console.error("Error checking password:", err);
-    }
-  };
+    } catch (err: unknown) {
+      // Axios throws on 401, 500, etc.
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        toast.error('Passwords do not match');
+      } else {
+        toast.error('An unexpected error occurred');
+      }
+      }
+    };
 
   useEffect(() => {
     if (!lastAdded)
@@ -369,7 +382,7 @@ const LocalTournament = () => {
     if (!tourneyId) return
     try {
       const resp = await fetch(
-        `http://localhost:8888/tournament/${tourneyId}/bracket`,
+        `${API_URL}/tournament/${tourneyId}/bracket`,
         { headers: { Authorization: `Bearer ${user!.authToken}` } }
       )
       if (!resp.ok) throw new Error(resp.statusText)
@@ -379,7 +392,7 @@ const LocalTournament = () => {
 
       if (tournament.status === 'completed' && !championName) {
         const info = await (
-          await fetch(`http://localhost:8888/user/${tournament.winner_id}`, {
+          await fetch(`${API_URL}/user/${tournament.winner_id}`, {
             headers: { Authorization: `Bearer ${user!.authToken}` },
           })
         ).json()
@@ -452,7 +465,7 @@ const LocalTournament = () => {
 
       try {
         await fetch(
-          `http://localhost:8888/tournament/${tourneyId}/match/${match.tm_id}/result`,
+          `${API_URL}/tournament/${tourneyId}/match/${match.tm_id}/result`,
           {
             method:  'POST',
             headers: {
@@ -467,7 +480,7 @@ const LocalTournament = () => {
         )
 
         const info = await (
-          await fetch(`http://localhost:8888/user/${winner.id}`, {
+          await fetch(`${API_URL}/user/${winner.id}`, {
             headers: { Authorization: `Bearer ${user!.authToken}` },
           })
         ).json()

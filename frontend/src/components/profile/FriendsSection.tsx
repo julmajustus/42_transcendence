@@ -8,6 +8,7 @@ import {
   EmptyState,
 } from '../../pages/UserProfileStyles';
 import { SearchUserSection } from './SearchUserSection';
+import { API_URL } from '../../config';
 
 interface Friend {
   id: number;
@@ -21,7 +22,8 @@ interface FriendsSectionProps {
 }
 
 export const FriendsSection: React.FC<FriendsSectionProps> = ({ friends }) => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8888';
+  const apiUrl = API_URL;
+  console.log('apiUrl in friends section: ', apiUrl)
   const [isSearchBarOpen, setSearchBarOpen] = useState(false);
 
   return (

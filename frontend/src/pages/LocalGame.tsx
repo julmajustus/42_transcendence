@@ -8,6 +8,8 @@ import {
 	GameRendererType,
   } from '../utils/GameRendererAdapter';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
@@ -230,7 +232,7 @@ const LocalGame = () => {
 		selected,
 		password,
 		})
-		// console.log('password check response:', response);
+		console.log('password check response:', response);
 		if (response.data.ok) {
 			setAddedPlayers([...addedPlayers, selected]);
 			setLastAdded(selected);
@@ -239,11 +241,16 @@ const LocalGame = () => {
 			setSelected(null);
 			setPassword('');
 		} else {
-			alert("Invalid password!");
+			toast.error('Passwords do not match');
 		}
-	} catch (err) {
-
-	}
+	} catch (err: unknown) {
+		// Axios throws on 401, 500, etc.
+		if (axios.isAxiosError(err) && err.response?.status === 401) {
+		  toast.error('Passwords do not match');
+		} else {
+		  toast.error('An unexpected error occurred');
+		}
+	  }
   };
 
 	useEffect(() => {
@@ -253,19 +260,12 @@ const LocalGame = () => {
 			try {
 				const res = await customFetch.get(`/user/${lastAdded}`)
 				const secondUserId = res.data.id
-				const response = await fetch('http://localhost:8888/game/new-singleplayer', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${user.authToken}`,
-					},
-					body: JSON.stringify({
-						// player_id: parseInt(creatorId),
-						player1_id: parseInt(creatorId),
-						player2_id: parseInt(secondUserId),
-					}),
+				const response = await customFetch.post('/game/new-singleplayer', {
+					// player_id: parseInt(creatorId),
+					player1_id: parseInt(creatorId),
+					player2_id: parseInt(secondUserId),
 				});
-				const data = await response.json()
+				const data = response.data
 				if (data.id) {
 					setGameId(data.id)
 					setReadyToRender(true)

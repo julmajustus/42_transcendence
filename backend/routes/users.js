@@ -426,7 +426,8 @@ function usersRoutes(fastify, options, done) {
 				})
 				const opponent = row ? row.username : null
 				// const opponentAvatar = row ? row.avatar : null
-				const opponentAvatar = `http://localhost:8888/user/${opponent}/avatar`
+				const backendAddress = process.env.VITE_BACKEND_HOST || 'localhost'
+				const opponentAvatar = `http://${backendAddress}:8888/user/${opponent}/avatar`
 
 				return {
 					id: m.id,

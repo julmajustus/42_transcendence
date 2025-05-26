@@ -36,9 +36,11 @@ services:
       - ./frontend:/app
       - ./Game:/app/Game
       - /app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8888
-      - VITE_WS_URL=ws://localhost:8888
+    # environment:
+    #   - VITE_API_URL=http://192.168.1.123:8888
+    #   - VITE_WS_URL=ws://192.168.1.123:8888
+    env_file:
+      - .env
     depends_on:
       - backend
 

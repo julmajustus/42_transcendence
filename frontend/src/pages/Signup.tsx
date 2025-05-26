@@ -3,7 +3,7 @@ import { ActionFunctionArgs, Form, Link, redirect } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { customFetch } from '../utils';
 import { toast } from 'react-toastify';
-import { AxiosError } from 'axios';
+import axios from 'axios';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -104,9 +104,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     toast.success('account created successfully');
     return redirect('/login');
   } catch (error: unknown) {
-    let errorMessage = 'please double check your credentials';
-    if (error instanceof AxiosError && error.message)
-      errorMessage = error.message;
+    let errorMessage = 'Please double check your credentials';
+    if (axios.isAxiosError(error)) {
+      // your backend sends `{ error: "User with this username already exists" }`
+      errorMessage =
+        (error.response?.data as { error?: string })?.error 
+        ?? error.message;
+    }
     toast.error(errorMessage);
     return null;
   }

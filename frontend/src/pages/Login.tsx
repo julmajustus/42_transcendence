@@ -13,6 +13,8 @@ import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { PROTOCOL } from '../config';
+import { BACKEND_PORT } from '../config';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -263,8 +265,7 @@ const Login: React.FC = () => {
         <GoogleButton
           type='button'
           onClick={() => {
-            const apiUrl =
-              import.meta.env.VITE_API_URL || 'http://localhost:8888';
+            const apiUrl = `${PROTOCOL}://localhost:${BACKEND_PORT}`;
             window.location.href = `${apiUrl}/oauth2/google/`;
           }}
         >

@@ -12,13 +12,6 @@ require('./cron');
 
 const fastifyOAuth2 = require('@fastify/oauth2')
 
-fastify.register(require('@fastify/cors'), {
-	// origin: 'http://localhost:5173',
-	origin: '*',
-	methods: ['GET', 'POST', 'PUT', 'DELETE'],
-	credentials: true
-})
-
 if (process.env.NODE_ENV !== 'test') {
 	require('dotenv').config();
 	// Check credential works
@@ -30,6 +23,29 @@ if (process.env.NODE_ENV !== 'test') {
 		console.error("Error loading dotenv:", error.message);
 	}
 }
+
+require('dotenv').config();
+const ALLOWED_ORIGINS = [
+	'http://localhost:5173',
+	process.env.VITE_FRONTEND_URL_FOR_CORS,
+].filter(Boolean); // drop any undefined
+
+console.log("allowd origins: ", ALLOWED_ORIGINS)
+console.log(process.env.VITE_FRONTEND_URL_FOR_CORS)
+
+fastify.register(require('@fastify/cors'), {
+	origin: (origin, cb) => {
+		// allow requests like curl or mobile apps with no origin header
+		if (!origin) return cb(null, true);
+
+		if (ALLOWED_ORIGINS.includes(origin)) {
+			return cb(null, true);
+		}
+		return cb(new Error(`Origin ${origin} not allowed by CORS`), false);
+	},
+	methods: ['GET', 'POST', 'PUT', 'DELETE'],
+	credentials: true,
+});
 
 fastify.register(import('@fastify/swagger'), {
 	swagger: {

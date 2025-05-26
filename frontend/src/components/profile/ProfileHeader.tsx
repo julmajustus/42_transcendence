@@ -16,6 +16,7 @@ import {
 } from '../../pages/UserProfileStyles';
 import { customFetch } from '../../utils';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../../config';
 
 interface ProfileHeaderProps {
   userProfile: any;
@@ -36,7 +37,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 }) => {
   const { user: currentUser } = useAuth();
   const isOnline = userProfile.online_status === 'online';
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8888';
+  const apiUrl = API_URL;
   const navigate = useNavigate();
 
   const fileInputRef = useRef<HTMLInputElement>(null);

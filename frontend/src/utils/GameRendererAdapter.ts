@@ -1,4 +1,6 @@
 import { GameRenderer } from '../../Game/render.js';
+import { HOST } from '../config.js'
+import { BACKEND_PORT } from '../config.js';
 
 /* // Define MessageType enum if you can't import it
 enum MessageType {
@@ -69,9 +71,11 @@ export function createGameRendererAdapter(
 
   const dummyWsUrl = 'ws://dummy';
   // Create an instance of the original GameRenderer with parsed hostname and port */
+  console.log("ip passed to game renderer: ", HOST)
+  console.log('port used for game render: ', BACKEND_PORT)
   const renderer = new GameRenderer(
-    'localhost',
-    8888,
+    HOST,
+    BACKEND_PORT,
     game_id,
     authToken,
     document,

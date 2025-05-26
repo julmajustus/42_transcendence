@@ -7,6 +7,7 @@ import {
   createGameRendererAdapter,
   GameRendererType,
 } from '../utils/GameRendererAdapter'
+import { API_URL } from '../config';
 
 const DEFAULT_WIDTH  = 800
 const DEFAULT_HEIGHT = 600
@@ -103,7 +104,7 @@ export default function Tournament() {
 
   // poll tournament/auto until tournament starts
   const fetchTournamentAuto = async () => {
-    const res  = await fetch('http://localhost:8888/tournament/auto', {
+    const res  = await fetch(`${API_URL}/tournament/auto`, {
       method:  'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -152,7 +153,7 @@ export default function Tournament() {
     if (!tourneyId) return
     try {
       const resp = await fetch(
-        `http://localhost:8888/tournament/${tourneyId}/bracket`,
+        `${API_URL}/tournament/${tourneyId}/bracket`,
         { headers: { Authorization: `Bearer ${user!.authToken}` } }
       )
       if (!resp.ok) throw new Error(resp.statusText)
@@ -162,7 +163,7 @@ export default function Tournament() {
 
       if (tournament.status === 'completed' && !championName) {
         const info = await (
-          await fetch(`http://localhost:8888/user/${tournament.winner_id}`, {
+          await fetch(`${API_URL}/user/${tournament.winner_id}`, {
             headers: { Authorization: `Bearer ${user!.authToken}` },
           })
         ).json()
@@ -218,7 +219,7 @@ export default function Tournament() {
 
       try {
         await fetch(
-          `http://localhost:8888/tournament/${tourneyId}/match/${match.tm_id}/result`,
+          `${API_URL}/tournament/${tourneyId}/match/${match.tm_id}/result`,
           {
             method:  'POST',
             headers: {
@@ -233,7 +234,7 @@ export default function Tournament() {
         )
 
         const info = await (
-          await fetch(`http://localhost:8888/user/${winner.id}`, {
+          await fetch(`${API_URL}/user/${winner.id}`, {
             headers: { Authorization: `Bearer ${user!.authToken}` },
           })
         ).json()

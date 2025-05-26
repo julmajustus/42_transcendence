@@ -1,3 +1,5 @@
+const { PROTOCOL } =  require('../config');
+const { FRONTEND_PORT } =  require('../config');
 const db = require('../db');
 
 const googleOAuthHandler = async function(request, reply) {
@@ -145,7 +147,7 @@ const googleOAuthHandler = async function(request, reply) {
   });
 
   // Redirect to frontend with the token
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const frontendUrl = `${PROTOCOL}://localhost:${FRONTEND_PORT}`;
   return reply.redirect(`${frontendUrl}/login?access_token=${jwtToken}`);
 
   } catch (err) {

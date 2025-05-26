@@ -7,6 +7,7 @@ import {
 	createGameRendererAdapter,
 	GameRendererType,
 } from '../utils/GameRendererAdapter';
+import { API_URL } from '../config';
 
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
@@ -73,7 +74,7 @@ const Matchmaking = () => {
 			setPendingId(null);
 			try {
 				// fetch the winner’s username
-				const resp = await fetch(`http://localhost:8888/user/${winner.id}`, {
+				const resp = await fetch(`${API_URL}/user/${winner.id}`, {
 					headers: { Authorization: `Bearer ${user.authToken}` }
 				});
 				const body = await resp.json();
@@ -104,7 +105,7 @@ const Matchmaking = () => {
 			isMatching = true;
 
 			try {
-				const res = await fetch('http://localhost:8888/matchmaking', {
+				const res = await fetch(`${API_URL}/matchmaking`, {
 					method: 'POST',
 					headers: { Authorization: `Bearer ${user.authToken}` }
 				});

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { FormInput, SubmitBtn } from '../components';
+import { API_URL } from '../config';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -269,7 +270,7 @@ const UserSettings = () => {
 	useEffect(() => {
 		(async () => {
 		try {
-			const resp = await fetch('http://localhost:8888/user/me', {
+			const resp = await fetch(`${API_URL}/user/me`, {
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${user.authToken}`,
@@ -329,7 +330,7 @@ const UserSettings = () => {
 			}
 		}
 		try {
-			const response = await fetch(`http://localhost:8888/user/${user.username}/update`, {
+			const response = await fetch(`${API_URL}/user/${user.username}/update`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
