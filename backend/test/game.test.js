@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/18 20:49:42 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/08 15:26:15 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/26 15:26:11 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,19 +38,19 @@ t.before(async () => {
 			});
 		});
 	});
-	const userA = { username: 'userA', password: 'passA', email: 'userA@aaa.aaa' };
-	const userB = { username: 'userB', password: 'passB', email: 'userB@aaa.aaa'  };
+	const userA = { username: 'userA', password: 'Qwerty12', email: 'userA@aaa.aaa' };
+	const userB = { username: 'userB', password: 'Qwerty12', email: 'userB@aaa.aaa'  };
 
 	const regA = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: 'api/user/register',
 		payload: userA,
 	});
 	userAId = JSON.parse(regA.payload).id;
 
 	const regB = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: 'api/user/register',
 		payload: userB,
 	});
 	userBId = JSON.parse(regB.payload).id;
@@ -60,7 +60,7 @@ t.test('Test 1: POST /game/new-multiplayer - creates a new multiplayer game', as
 	const payload = {player1_id: userAId, player2_id: userBId};
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/game/new-multiplayer',
+		url: 'api/game/new-multiplayer',
 		payload,
 	});
 
@@ -75,7 +75,7 @@ t.test('Test 2: POST /game/new-multiplayer - creates a new multiplayer game fail
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/game/new-multiplayer',
+		url: 'api/game/new-multiplayer',
 		payload,
 	});
 
@@ -87,7 +87,7 @@ t.test('Test 3: POST /game/new-multiplayer - creates a new multiplayer game fail
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/game/new-multiplayer',
+		url: 'api/game/new-multiplayer',
 		payload,
 	});
 
@@ -99,7 +99,7 @@ t.test('Test 4: POST /game/new-multiplayer - creates a new multiplayer game fail
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/game/new-multiplayer',
+		url: 'api/game/new-multiplayer',
 		payload,
 	});
 
@@ -112,7 +112,7 @@ t.test('Test 5: POST /game/new-multiplayer - creates a new multiplayer game fail
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/game/new-multiplayer',
+		url: 'api/game/new-multiplayer',
 		payload,
 	});
 
@@ -122,7 +122,7 @@ t.test('Test 5: POST /game/new-multiplayer - creates a new multiplayer game fail
 t.test('Test 6: GET /game/list - lists games)', async t => {
 	const res = await fastify.inject({
 		method: 'GET',
-		url: '/game/list'
+		url: 'api/game/list'
 	});
 
 	t.equal(res.statusCode, 200, 'Should return 200 when listing succeeds');
@@ -134,7 +134,7 @@ t.test('Test 7: GET /game/list:id - List specific game information', async t => 
 	t.ok(gameId, 'Game ID must be set from earlier test');
 	const res = await fastify.inject({
 		method: 'GET',
-		url: `/game/list/${gameId}`
+		url: `api/game/list/${gameId}`
 	});
 	t.equal(res.statusCode, 200, 'Should return 200 for existing game');
 	const body = JSON.parse(res.payload);
@@ -145,7 +145,7 @@ t.test('Test 8: GET /game/list:id - Fail to list non existing game', async t => 
 	t.ok(gameId, 'Game ID must be set from earlier test');
 	const res = await fastify.inject({
 		method: 'GET',
-		url: `/game/list/42`
+		url: `api/game/list/42`
 	});
 	t.equal(res.statusCode, 404, 'Should return 404 for non existing game');
 	t.end();
@@ -156,7 +156,7 @@ t.test('Test 9: POST /game/new-singleplayer - creates a new singleplayer game', 
 	const payload = {player1_id: userAId, player2_id: userBId};
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/game/new-singleplayer',
+		url: 'api/game/new-singleplayer',
 		payload,
 	});
 
@@ -170,7 +170,7 @@ t.test('Test 10: POST /game/new-singleplayer - fails when game id does not exist
 	const payload = {player_id: 42};
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/game/new-singleplayer',
+		url: 'api/game/new-singleplayer',
 		payload,
 	});
 

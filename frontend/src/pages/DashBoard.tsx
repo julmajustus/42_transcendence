@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
   return (
     <DashboardContainer>
       <WelcomeSection>
-        <Title>WELCOME, {user.username.toUpperCase()}</Title>
+        <Title>WELCOME, {user.username/*.toUpperCase()*/}</Title>
         <Subtitle>Choose a game mode to start playing</Subtitle>
       </WelcomeSection>
 

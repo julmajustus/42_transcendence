@@ -43,7 +43,6 @@ const getUser = (request, reply) => {
 			request.log.warn(`User ${identifier} not found`)
 			return reply.status(404).send({error: `User ${identifier} not found`})
 		}
-		// row.avatar = `http://localhost:8888/user/${row.username}/avatar`
 		return reply.send(row)
 	})
 }
@@ -648,7 +647,6 @@ const getUserMatchList = async (request, reply) => {
 	const { username } = request.params;
 
 	try {
-	// 1) Look up user ID by username
 		const userRow = await new Promise((res, rej) =>
 			db.get('SELECT id FROM users WHERE username = ?', [username],
 				(err, row) => err ? rej(err) : res(row)
@@ -660,7 +658,6 @@ const getUserMatchList = async (request, reply) => {
 		}
 		const userId = userRow.id;
 
-		// 2) Fetch all finished matches involving that user
 		const matches = await new Promise((res, rej) =>
 			db.all(
 				`SELECT
@@ -682,7 +679,6 @@ const getUserMatchList = async (request, reply) => {
 			)
 		);
 
-		// 3) Optionally post-process each row to add “opponent” and “didWin” flags
 		const result = await Promise.all(matches.map(async (m) => {
 			const isPlayer1 = m.player1_id === userId;
 			let opponentId = isPlayer1 ? m.player2_id : m.player1_id;
@@ -696,10 +692,7 @@ const getUserMatchList = async (request, reply) => {
 				)
 			})
 			const opponent = row ? row.username : null
-			// const opponentAvatar = row ? row.avatar : null
-			const backendAddress = process.env.VITE_BACKEND_HOST || 'localhost'
-			// const opponentAvatar = `http://${backendAddress}:8888/user/${opponent}/avatar`
-			const opponentAvatar = `api/user/${opponent}/avatar`
+			const opponentAvatar = `/api/user/${opponent}/avatar`
 
 			return {
 				id: m.id,

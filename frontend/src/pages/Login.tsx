@@ -13,9 +13,6 @@ import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { PROTOCOL } from '../config';
-import { BACKEND_PORT } from '../config';
-import { API_URL } from '../config';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -309,7 +306,7 @@ const Login: React.FC = () => {
       }
     }
     try {
-      const response = await fetch(`${API_URL}/user/${user.username}/update`, {
+      const response = await fetch(`/api/user/${user.username}/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -393,7 +390,6 @@ const Login: React.FC = () => {
         <GoogleButton
           type='button'
           onClick={() => {
-            // const apiUrl = `${PROTOCOL}://localhost:${BACKEND_PORT}`;
             window.location.href = `api/oauth2/google/`;
           }}
         >

@@ -1,5 +1,3 @@
-const { PROTOCOL } =  require('../config');
-const { FRONTEND_PORT } =  require('../config');
 const db = require('../db');
 const bcrypt = require('bcryptjs')
 
@@ -150,14 +148,12 @@ const googleOAuthHandler = async function(request, reply) {
   });
 
   // Redirect to frontend with the token
-  // const frontendUrl = `${PROTOCOL}://localhost:${FRONTEND_PORT}`;
-  // return reply.redirect(`${frontendUrl}/login?access_token=${jwtToken}`);
   return reply.redirect(`/login?access_token=${jwtToken}`);
 
 
   } catch (err) {
-  request.log.error(`Google OAuth error: ${err.message}`);
-  return reply.redirect('/?error=authentication_failed');
+    request.log.error(`Google OAuth error: ${err.message}`);
+    return reply.redirect('/?error=authentication_failed');
   }
 };
 

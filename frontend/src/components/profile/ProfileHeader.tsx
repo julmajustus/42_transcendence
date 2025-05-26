@@ -16,7 +16,6 @@ import {
 } from '../../pages/UserProfileStyles';
 import { customFetch } from '../../utils';
 import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../../config';
 
 interface ProfileHeaderProps {
   userProfile: any;
@@ -37,12 +36,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 }) => {
   const { user: currentUser } = useAuth();
   // const isOnline = userProfile.online_status === 'online';
-  const apiUrl = API_URL;
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [avatarSrc, setAvatarSrc] = React.useState(
-    `${apiUrl}/user/${userProfile.username}/avatar?t=${Date.now()}`
+    `/api/user/${userProfile.username}/avatar?t=${Date.now()}`
   );
 
   const handleAvatarClick = () => {
@@ -73,14 +71,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }
       );
 
-/*       const avatarImg =
-        document.querySelector<HTMLImageElement>('.profile-avatar');
-      if (avatarImg) {
-        avatarImg.src = `${apiUrl}/user/${
-          userProfile.username
-        }/avatar?t=${Date.now()}`;
-      } */
-      setAvatarSrc(`${apiUrl}/user/${userProfile.username}/avatar?t=${Date.now()}`);
+      setAvatarSrc(`/api/user/${userProfile.username}/avatar?t=${Date.now()}`);
     } catch (error) {
       console.error('Error uploading avatar:', error);
     }
@@ -97,7 +88,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <AvatarContainer>
         <ProfileAvatar
           className="profile-avatar"
-          // src={`${apiUrl}/user/${userProfile.username}/avatar?t=${Date.now()}`}
           src={avatarSrc}
           alt={`${userProfile.username}'s avatar`}
           onClick={handleAvatarClick}

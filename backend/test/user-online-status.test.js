@@ -18,12 +18,12 @@ t.before(async () => {
 });
 
 t.test('online status tests', async t => {
-	const userA = { username: 'userA', password: 'passA', email: 'aaa@aaa.aaa' };
+	const userA = { username: 'userA', password: 'Qwerty23', email: 'aaa@aaa.aaa' };
 	
 	// register userA
 	const regA = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: 'api/user/register',
 		payload: userA,
 	});
 	// const userAId = JSON.parse(regA.payload).id;
@@ -32,14 +32,14 @@ t.test('online status tests', async t => {
 	// get default online status of userA
 	let statusUserA = await fastify.inject({
 		method: 'GET',
-		url: `user/${userAUsername}`
+		url: `api/user/${userAUsername}`
 	})
 	t.equal(JSON.parse(statusUserA.payload).online_status, 'offline', 'user is correctly set offline at registration')
 
 	// login userA
 	const loginA = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
+		url: 'api/user/login',
 		payload: userA,
 	});
 	const tokenA = JSON.parse(loginA.payload).token;
@@ -47,28 +47,28 @@ t.test('online status tests', async t => {
 	// get status of userA afetr login
 	statusUserA = await fastify.inject({
 		method: 'GET',
-		url: `user/${userAUsername}`
+		url: `api/user/${userAUsername}`
 	})
 	t.equal(JSON.parse(statusUserA.payload).online_status, 'online', 'user is correctly set online after login')
 
 	// set userA status to away
 	let updatedStatus = await fastify.inject({
 		method: 'PUT',
-		url: `/update_online_status/${userAUsername}`,
+		url: `api/update_online_status/${userAUsername}`,
 		headers: { Authorization: `Bearer ${tokenA}` },
 		payload: { status: 'away' },
 	})
 	t.equal(updatedStatus.statusCode, 200, 'online status set to away succesfully')
 	statusUserA = await fastify.inject({
 		method: 'GET',
-		url: `user/${userAUsername}`
+		url: `api/user/${userAUsername}`
 	})
 	t.equal(JSON.parse(statusUserA.payload).online_status, 'away', 'user status updated also on db successfully')
 
 	// set userA status to a wrong status
 	updatedStatus = await fastify.inject({
 		method: 'PUT',
-		url: `/update_online_status/${userAUsername}`,
+		url: `api/update_online_status/${userAUsername}`,
 		headers: { Authorization: `Bearer ${tokenA}` },
 		payload: { status: 'wrongStatus' },
 	})
@@ -77,7 +77,7 @@ t.test('online status tests', async t => {
 	// try to set status of another user
 	updatedStatus = await fastify.inject({
 		method: 'PUT',
-		url: `/update_online_status/wrongUsername`,
+		url: `api/update_online_status/wrongUsername`,
 		headers: { Authorization: `Bearer ${tokenA}` },
 		payload: { status: 'online' },
 	})

@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { FormInput, SubmitBtn } from '../components';
-import { API_URL } from '../config';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -271,7 +270,7 @@ const UserSettings = () => {
 	useEffect(() => {
 		(async () => {
 		try {
-			const resp = await fetch(`${API_URL}/user/me`, {
+			const resp = await fetch(`/api/user/me`, {
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${user.authToken}`,
@@ -281,7 +280,7 @@ const UserSettings = () => {
 			const data = await resp.json();
 			// console.log(data)
 			setTwoFAEnabled(Number(data.two_fa) === 1);
-			if (data.online_status)
+			if (data.google_id)
 				setGmailAuth(true)
 		} catch (err) {
 			console.error('Failed to fetch 2FA status', err);
@@ -352,7 +351,7 @@ const UserSettings = () => {
 			}
 		}
 		try {
-			const response = await fetch(`${API_URL}/user/${user.username}/update`, {
+			const response = await fetch(`/api/user/${user.username}/update`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
