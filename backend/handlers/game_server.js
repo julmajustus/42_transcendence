@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   game_server.js                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 10:03:53 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/08 10:24:20 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/26 15:54:34 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,7 +119,7 @@ const createNewMultiplayerGame = async (request, reply) => {
 				}
 			);
 		});
-		game_server.createMultiplayerGame(gameId, player1_id, player2_id);
+		await game_server.createMultiplayerGame(gameId, player1_id, player2_id);
 		reply.status(200).send({
 			"id": gameId
 		});
@@ -171,7 +171,7 @@ const createNewSinglePlayerGame = async (request, reply) => {
 				}
 			);
 		});
-		game_server.createSingleplayerGame(gameId, player1_id, player2_id);
+		await game_server.createSingleplayerGame(gameId, player1_id, player2_id);
 		// reply.status(200);
 		reply.status(200).send({
 			"id": gameId

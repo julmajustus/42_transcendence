@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   user-db-errors.test.js                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmarkaid <pmarkaid@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/03 01:29:31 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/04/24 15:51:54 by pmarkaid         ###   ########.fr       */
+/*   Updated: 2025/05/26 15:28:43 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ const fastify = t.mockRequire('../server', {
 t.test('GET /users => 500 when DB.all() fails', async t => {
 	const res = await fastify.inject({
 		method: 'GET',
-		url: '/users',
+		url: 'api/users',
 	});
 	t.equal(res.statusCode, 500, 'Should return 500 on DB error');
 	const payload = JSON.parse(res.payload);
@@ -50,7 +50,7 @@ t.test('GET /users => 500 when DB.all() fails', async t => {
 t.test('GET /user/:id => 500 when DB.get() fails', async t => {
 	const res = await fastify.inject({
 		method: 'GET',
-		url: '/user/999',
+		url: 'api/user/999',
 	});
 	t.equal(res.statusCode, 500, 'Should return 500 on DB error');
 	const payload = JSON.parse(res.payload);
@@ -64,8 +64,8 @@ t.test('GET /user/:id => 500 when DB.get() fails', async t => {
 t.test('POST /user/register => 500 when DB fails', async t => {
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
-		payload: { username: 'bad', password: 'badpw', email: 'aaa@aaa.aaa' },
+		url: 'api/user/register',
+		payload: { username: 'bad', password: 'Qwerty12', email: 'aaa@aaa.aaa' },
 	});
 	t.equal(res.statusCode, 500, 'DB error => 500');
 	const body = JSON.parse(res.payload);
@@ -78,8 +78,8 @@ t.test('POST /user/register => 500 when DB fails', async t => {
 t.test('POST /user/login => 500 when DB fails', async t => {
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
-		payload: { username: 'any', password: 'pw' },
+		url: 'api/user/login',
+		payload: { username: 'any', password: 'Qwerty12' },
 	});
 	t.equal(res.statusCode, 500, 'Should return 500 on DB error');
 	const body = JSON.parse(res.payload);
@@ -92,11 +92,11 @@ t.test('POST /user/login => 500 when DB fails', async t => {
 t.test('PUT /user/:username/update => 500 when DB fails', async t => {
 	const res = await fastify.inject({
 		method: 'PUT',
-		url: '/user/testuser/update',
+		url: 'api/user/testuser/update',
 		headers: { Authorization: 'Bearer faketoken' },
 		payload: {
-			currentPassword: 'whatever',
-			newPassword: 'somepw',
+			currentPassword: 'Qwerty12',
+			newPassword: 'Qwerty23',
 		},
 	});
 	t.ok([401, 500].includes(res.statusCode), 'Status is either 401 (JWT check) or 500 (DB error)');
@@ -116,8 +116,8 @@ t.test('POST /user/login returns 500 when DB.get fails', async t => {
 
 	const res = await fastifyFailLogin.inject({
 		method: 'POST',
-		url: '/user/login',
-		payload: { username: 'testuser', password: 'any' },
+		url: 'api/user/login',
+		payload: { username: 'testuser', password: 'Qwerty12' },
 	});
 
 	t.equal(res.statusCode, 500, 'Should return 500 on DB.get failure during login');

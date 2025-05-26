@@ -24,22 +24,25 @@ const DEFAULT_HEIGHT = 600;
 
 export class GameRenderer {
 	constructor(
-		server_uri,
-		server_port,
 		game_id,
 		user_token,
 		document,
 		game_type,
-		// wsUrl = null
 	) {
-		this.server_uri = server_uri;
 		this.game_id = game_id;
 		this.user_token = user_token;
-/* 		const websocketUrl =
-			wsUrl ||
-			`ws://${server_uri}:${server_port}/ws/game/${game_id}?token=${authToken}`;
-		this.socket = new WebSocket(websocketUrl); */
-		this.socket = new WebSocket(`ws://${server_uri}:${server_port}/${GAME_ENDPOINT}`);
+
+		// somewhere in your constants or socket-init file
+		const WS_PATH = `/ws/${GAME_ENDPOINT}`;
+
+		// pick the right WS protocol based on page protocol
+		const WS_PROTO = location.protocol === 'https:' ? 'wss' : 'ws';
+
+		// Build your socket URL against the same origin
+		const WS_URL = `${WS_PROTO}://${location.host}${WS_PATH}`;
+
+		// Usage
+		this.socket = new WebSocket(WS_URL);
 		this.connected = false;
 
 		// game
@@ -272,12 +275,9 @@ export class GameRenderer {
 		}
 		else {
 			if (this.game_type === "multi") {
-				// Todo: Display nickname instead of id
 				text = `${winner.username} won the game`;
 			}
 			if (this.game_type === "single") {
-				// Hacky, single player ids are -1 and -2, i.e. somthing that's not a real id
-				// text = `Player ${winner.id * -1} won the game`;
 				text = `${winner.username} won the game`;
 			}
 		}

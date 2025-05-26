@@ -8,7 +8,6 @@ import {
   EmptyState,
 } from '../../pages/UserProfileStyles';
 import { SearchUserSection } from './SearchUserSection';
-import { API_URL } from '../../config';
 
 interface Friend {
   id: number;
@@ -22,8 +21,6 @@ interface FriendsSectionProps {
 }
 
 export const FriendsSection: React.FC<FriendsSectionProps> = ({ friends }) => {
-  const apiUrl = API_URL;
-  console.log('apiUrl in friends section: ', apiUrl)
   const [isSearchBarOpen, setSearchBarOpen] = useState(false);
 
   return (
@@ -46,7 +43,7 @@ export const FriendsSection: React.FC<FriendsSectionProps> = ({ friends }) => {
               <UserCard
                 id={friend.id}
                 username={friend.username}
-                avatar={`${apiUrl}/user/${friend.username}/avatar`}
+                avatar={`/api/user/${friend.username}/avatar`}
                 online_status={friend.online_status || 'offline'}
               />
             </Link>

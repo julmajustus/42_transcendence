@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { FormInput, SubmitBtn } from '../components';
-import { API_URL } from '../config';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -266,11 +265,12 @@ const UserSettings = () => {
 	const [changingEmail, setChangingEmail] = useState(false)
 	const [newEmail, setNewEmail] = useState("");
 	const [confirmEmail, setConfirmEmail] = useState("");
+	const [gmailAuth, setGmailAuth] = useState(false)
 
 	useEffect(() => {
 		(async () => {
 		try {
-			const resp = await fetch(`${API_URL}/user/me`, {
+			const resp = await fetch(`/api/user/me`, {
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${user.authToken}`,
@@ -280,6 +280,8 @@ const UserSettings = () => {
 			const data = await resp.json();
 			// console.log(data)
 			setTwoFAEnabled(Number(data.two_fa) === 1);
+			if (data.google_id)
+				setGmailAuth(true)
 		} catch (err) {
 			console.error('Failed to fetch 2FA status', err);
 			toast.error('Could not load 2FA status');
@@ -289,6 +291,10 @@ const UserSettings = () => {
 	// console.log('twoFAEnabled: ', twoFAEnabled)
 	
 	const handleToggle2FA = () => {
+		if (gmailAuth === true) {
+			toast.error('2FA is not available ig logged in with google')
+			return
+		}
 		setTwoFAEnabled(prev => !prev)
 		setTimeout(() => {
 			setChangingtwoFA(true)
@@ -298,12 +304,16 @@ const UserSettings = () => {
 	const handleChangeUsername = () => {
 		setChangingUsername(true)
 	}
-
+	
 	const handleChangePassword = () => {
 		setChangingPassword(true)
 	}
-
+	
 	const handleChangeEmail = () => {
+		if (gmailAuth === true) {
+			toast.error('Change email is not possible if logged in with google')
+			return
+		}
 		setChangingEmail(true)
 	}
 
@@ -341,7 +351,7 @@ const UserSettings = () => {
 			}
 		}
 		try {
-			const response = await fetch(`${API_URL}/user/${user.username}/update`, {
+			const response = await fetch(`/api/user/${user.username}/update`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',

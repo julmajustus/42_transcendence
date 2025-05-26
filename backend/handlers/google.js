@@ -1,6 +1,5 @@
-const { PROTOCOL } =  require('../config');
-const { FRONTEND_PORT } =  require('../config');
 const db = require('../db');
+const bcrypt = require('bcryptjs')
 
 const googleOAuthHandler = async function(request, reply) {
   // In test environment, use mock behavior
@@ -112,11 +111,13 @@ const googleOAuthHandler = async function(request, reply) {
 	  fileName = 'fallback.jpeg'
 	}
 
+  const hashedPassword = await bcrypt.hash('googlePsw12', 10);
+
 	// Insert the new user
 	userId = await new Promise((resolve, reject) => {
 	  db.run(
 		'INSERT INTO users (username, email, google_id, password, avatar, online_status) VALUES (?, ?, ?, ?, ?, ?)',
-		[username, googleUser.email, googleUser.id, '', fileName, 'online'],
+		[username, googleUser.email, googleUser.id, hashedPassword, fileName, 'online'],
 		function(err) {
 		  if (err) return reject(err);
 		  resolve(this.lastID);
@@ -147,12 +148,12 @@ const googleOAuthHandler = async function(request, reply) {
   });
 
   // Redirect to frontend with the token
-  const frontendUrl = `${PROTOCOL}://localhost:${FRONTEND_PORT}`;
-  return reply.redirect(`${frontendUrl}/login?access_token=${jwtToken}`);
+  return reply.redirect(`/login?access_token=${jwtToken}`);
+
 
   } catch (err) {
-  request.log.error(`Google OAuth error: ${err.message}`);
-  return reply.redirect('/?error=authentication_failed');
+    request.log.error(`Google OAuth error: ${err.message}`);
+    return reply.redirect('/?error=authentication_failed');
   }
 };
 

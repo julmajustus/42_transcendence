@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   user-db-insert-error.test.js                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmarkaid <pmarkaid@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/03 01:33:35 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/04/24 16:03:57 by pmarkaid         ###   ########.fr       */
+/*   Updated: 2025/05/26 15:28:18 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,10 +47,10 @@ t.test('POST /user/register -> fails on INSERT', async t => {
 	// Because "SELECT user" returns null, the code will try INSERT and fail.
 	const response = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: 'api/user/register',
 		payload: {
 			username: 'mockFail',
-			password: 'somepass',
+			password: 'Qwerty12',
 			email: 'aaa@aaa.aaa'
 		}
 	});
@@ -84,7 +84,7 @@ t.test('GET /users returns 404 when no users exist (empty result)', async t => {
 
 	const res = await fastifyEmpty.inject({
 		method: 'GET',
-		url: '/users',
+		url: 'api/users',
 	});
 	t.equal(res.statusCode, 404, 'Should return 404 when no users exist');
 	const body = JSON.parse(res.payload);
@@ -129,9 +129,9 @@ t.test('PUT /user/:username/update returns 500 when DB.get fails in updateUser',
 	// Call the route, passing some Authorization header.
 	const res = await fastifyUpdateFail.inject({
 		method: 'PUT',
-		url: '/user/testuser/update',
+		url: 'api/user/testuser/update',
 		headers: { Authorization: 'Bearer faketoken' },
-		payload: { currentPassword: 'anything', newPassword: 'newpass' }
+		payload: { currentPassword: 'Qwerty12', newPassword: 'Qwerty23' }
 	});
 
 	t.equal(res.statusCode, 500, 'updateUser should return 500 when DB error occurs');

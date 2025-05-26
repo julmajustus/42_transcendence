@@ -1,14 +1,14 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   server.test.js                                     :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: jmakkone <jmakkone@student.hive.fi>        +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2025/04/02 16:27:49 by jmakkone          #+#    #+#             //
-//   Updated: 2025/04/09 17:27:05 by jmakkone         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   server.test.js                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/02 16:27:49 by jmakkone          #+#    #+#             */
+/*   Updated: 2025/05/26 15:09:53 by mpellegr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 const t = require('tap');
 const fastify = require('../server');
@@ -41,10 +41,10 @@ t.test('Server start() function runs when executed as main', t => {
 
 	child.stdout.on('data', data => {
 		output += data.toString();
-		if (output.includes(`Server listening on http://localhost:8888`)) {
+		if (output.includes(`Server running on port 8888`)) {
 			t.match(
 				output,
-				/Server listening on http:\/\/localhost:8888/,
+				/Server running on port 8888/,
 				'Output contains the expected listening message'
 			);
 			// Send SIGINT to attempt a graceful shutdown.
