@@ -269,26 +269,26 @@ const UserSettings = () => {
 
 	useEffect(() => {
 		(async () => {
-		try {
-			const resp = await fetch(`/api/user/me`, {
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${user.authToken}`,
-				},
-			});
-			if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-			const data = await resp.json();
-			// console.log(data)
-			setTwoFAEnabled(Number(data.two_fa) === 1);
-			if (data.google_id)
-				setGmailAuth(true)
-		} catch (err) {
-			console.error('Failed to fetch 2FA status', err);
-			toast.error('Could not load 2FA status');
-		}
+			if (!user)
+				return
+			try {
+				const resp = await fetch(`/api/user/me`, {
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${user.authToken}`,
+					},
+				});
+				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+				const data = await resp.json();
+				setTwoFAEnabled(Number(data.two_fa) === 1);
+				if (data.google_id)
+					setGmailAuth(true)
+			} catch (err) {
+				console.error('Failed to fetch 2FA status', err);
+				toast.error('Could not load 2FA status');
+			}
 		})();
-	}, [user.authToken]);
-	// console.log('twoFAEnabled: ', twoFAEnabled)
+	}, [user]);
 	
 	const handleToggle2FA = () => {
 		if (gmailAuth === true) {
@@ -319,6 +319,8 @@ const UserSettings = () => {
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		if (!user)
+			return
 
 		const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 		const userRe = /^[A-Za-z0-9_]{3,20}$/

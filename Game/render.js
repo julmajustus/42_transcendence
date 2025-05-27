@@ -158,7 +158,6 @@ export class GameRenderer {
 		});
 
 		this.socket.addEventListener('message', (event) => {
-			//console.log('Received:', event.data);
 			const {type, payload} = JSON.parse(event.data);
 			if (type === MessageType.SETTINGS) {
 				this.updateSettings(payload);

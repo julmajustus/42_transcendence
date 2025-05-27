@@ -157,9 +157,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       password,
     });
 
-    // const skipTwoFactor = import.meta.env.VITE_SKIP_2FA === 'true';
-    // console.log(skipTwoFactor);
-
     if (response.data.token) {
       // if (skipTwoFactor) {
         toast.success('Logged in without 2FA successfully');
@@ -194,8 +191,6 @@ const Login: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
 
   useEffect(() => {
-    // console.log(actionData?.initialAuth);
-
     // Handle 2FA required response
     if (actionData?.initialAuth) {
       // Navigate to 2FA verification page
@@ -262,15 +257,11 @@ const Login: React.FC = () => {
   }, [actionData, login, navigate, location]);
 
     const handlePasswordSubmit = async (username: string) => {
-    // Check if password is valid (You could have additional validation here)
-    // console.log(selected)
-    // console.log(password)
       try{
         const response = await customFetch.post('/check_password', {
           selected: username,
           password: 'googlePsw12',
         })
-        console.log('password check response:', response);
         if (response.data.ok)
           setNeedPassword(true)
         else
@@ -292,6 +283,9 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!user)
+      return
 
     const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
@@ -318,11 +312,6 @@ const Login: React.FC = () => {
         }),
       });
       if (response.status === 200) {
-/*         toast.success('Your credentials were updated. You will be logged out to re-authenticate.');
-        setTimeout(() => {
-          logout();
-          navigate('/login');
-        }, 2000); */
         navigate('/dashboard');
       } else {
         const body = await response.json();

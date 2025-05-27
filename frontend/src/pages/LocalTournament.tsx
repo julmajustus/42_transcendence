@@ -325,7 +325,6 @@ const LocalTournament = () => {
       selected,
       password,
       })
-      // console.log('password check response:', response);
       if (response.data.ok) {
         setLastAdded(selected);
         setShowPasswordPrompt(false);
@@ -349,7 +348,6 @@ const LocalTournament = () => {
   useEffect(() => {
     if (!lastAdded)
       return
-    // console.log("lastAdded player: ", lastAdded)
     const fetchAndJoin = async () => {
       try {
         const res = await customFetch.get(`/user/${lastAdded}`)
@@ -423,19 +421,12 @@ const LocalTournament = () => {
 		};
 
 		// Create the renderer using the adapter
-		// console.log('creator id used for createGameRendererAdapter:', creatorId)
 		const renderer = createGameRendererAdapter(
-			// creatorId,
 			gameId,
 			user.authToken,
 			canvasRef.current,
 			"single"
 		);
-
-/* 		renderer.onGameOver = (winner) => {
-			// console.log("Game over, winner:", winner);
-			setTimeout(() => navigate("/dashboard"), 3_000);
-		}; */
 
 		// Add event listeners
 		document.addEventListener('keydown', keyDownHandler);

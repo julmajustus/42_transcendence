@@ -183,7 +183,7 @@ const LocalGame = () => {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
   const [lastAdded, setLastAdded] = useState<string | null>(null)
-  const [creatorId, setCreatorId] = useState(null)
+  const [creatorId, setCreatorId] = useState<string | null>(null)
   const { user } = useAuth();
   const [readyToRender, setReadyToRender] = useState(false)
   const navigate = useNavigate();
@@ -192,9 +192,7 @@ const LocalGame = () => {
   useEffect(() => {
 	if (!user)
 		return
-	// console.log('logged in user:', user.username)
 	setAddedPlayers([user.username])
-	// console.log('logged in user id:', user.id)
 	setCreatorId(user.id)
   }, [user])
 
@@ -235,7 +233,6 @@ const LocalGame = () => {
 		selected,
 		password,
 		})
-		console.log('password check response:', response);
 		if (response.data.ok) {
 			setAddedPlayers([...addedPlayers, selected]);
 			setLastAdded(selected);
@@ -314,9 +311,7 @@ const LocalGame = () => {
 		};
 
 		// Create the renderer using the adapter
-		// console.log('creator id used for createGameRendererAdapter:', creatorId)
 		const renderer = createGameRendererAdapter(
-			// creatorId,
 			gameId,
 			user.authToken,
 			canvasRef.current,
@@ -324,7 +319,6 @@ const LocalGame = () => {
 		);
 
 		renderer.onGameOver = (winner) => {
-			// console.log("Game over, winner:", winner);
 			setTimeout(() => navigate("/dashboard"), 3_000);
 		};
 
