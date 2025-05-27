@@ -169,16 +169,20 @@ const GameCanvas = styled.canvas`
   margin-top: 1rem;
 `;
 
+interface User {
+  id:       number
+  username: string
+}
 
 const LocalGame = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [query, setQuery] = useState('');
-  const [filtered, setFiltered] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [addedPlayers, setAddedPlayers] = useState([]);
+  const [filtered, setFiltered] = useState<User[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
-  const [lastAdded, setLastAdded] = useState(null);
+  const [lastAdded, setLastAdded] = useState<string | null>(null)
   const [creatorId, setCreatorId] = useState(null)
   const { user } = useAuth();
   const [readyToRender, setReadyToRender] = useState(false)
@@ -211,7 +215,7 @@ const LocalGame = () => {
 	setFiltered(users.filter(u => u.username.toLowerCase().includes(query.toLowerCase())));
   }, [query, users]);
 
-  const handleSelect = (username) => {
+  const handleSelect = (username: string) => {
 	setSelected(username);
 	setQuery(username);
 	setFiltered([]);
@@ -224,9 +228,8 @@ const LocalGame = () => {
   };
 
   const handlePasswordSubmit = async () => {
-	// Check if password is valid (You could have additional validation here)
-	// console.log(selected)
-	// console.log(password)
+    if (!selected)
+      return
 	try{
 		const response = await customFetch.post('/check_password', {
 		selected,
@@ -283,7 +286,7 @@ const LocalGame = () => {
 	const rendererRef = useRef<GameRendererType | null>(null);
 
 	useEffect(() => {
-		if (addedPlayers.length !== 2 || creatorId === null || !canvasRef.current || !user?.authToken || readyToRender === false)
+		if (addedPlayers.length !== 2 || creatorId === null || !canvasRef.current || !user?.authToken || readyToRender === false || !gameId)
 			return;
 
 		canvasRef.current.focus();

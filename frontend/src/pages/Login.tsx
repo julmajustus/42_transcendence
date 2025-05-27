@@ -261,7 +261,7 @@ const Login: React.FC = () => {
     }
   }, [actionData, login, navigate, location]);
 
-    const handlePasswordSubmit = async (username) => {
+    const handlePasswordSubmit = async (username: string) => {
     // Check if password is valid (You could have additional validation here)
     // console.log(selected)
     // console.log(password)
@@ -290,7 +290,7 @@ const Login: React.FC = () => {
       }
     };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/

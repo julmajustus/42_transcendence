@@ -49,7 +49,7 @@ fastify.register(import('@fastify/swagger-ui'), {
 })
 
 fastify.register(require('@fastify/jwt'), {
-	secret: 'supersecret'
+	secret: process.env.JWT_SECRET
 })
 
 fastify.register(require('@fastify/static'), {

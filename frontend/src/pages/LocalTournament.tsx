@@ -212,7 +212,7 @@ const ChampionScreen = styled(Container)`
   text-align:      center;
 `
 
-interface Player {
+interface User {
   id:       number
   username: string
 }
@@ -229,27 +229,21 @@ interface BrRow {
 }
 
 const LocalTournament = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [query, setQuery] = useState('');
-  const [filtered, setFiltered] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [addedPlayers, setAddedPlayers] = useState([]);
+  const [filtered, setFiltered] = useState<User[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
-  const [lastAdded, setLastAdded] = useState(null);
-  // const [creatorId, setCreatorId] = useState(null)
+  const [lastAdded, setLastAdded] = useState<string | null>(null)
   const { user } = useAuth();
-  const [readyToRender, setReadyToRender] = useState(false)
   const navigate = useNavigate();
   const [gameId, setGameId] = useState<number | null>(null);
   const [tourneyId,    setTourneyId]    = useState<number | null>(null)
-  const [players,      setPlayers]      = useState<Player[]>([])
-  const [started,      setStarted]      = useState(false)
   const [bracket,      setBracket]      = useState<BrRow[]>([])
-  const [loading,      setLoading]      = useState(true)
   const [championName, setChampionName] = useState<string | null>(null)
   const [winnerName,   setWinnerName]   = useState<string | null>(null)
-  // const [myUserId,     setMyUserId]     = useState<number | null>(null)
 
   const joinTournament = useCallback(async (playerId: number) => {
     try {
@@ -264,19 +258,13 @@ const LocalTournament = () => {
           game_type: 'local',
         }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || res.statusText)
+      }
       const body = await res.json()
-      // const res = await customFetch.post('/tournament/auto', { // for some reason customFetch not working
-      //   player_id: playerId,
-      //   game_type: 'local',
-      // })
-      // const body = res.data
-      console.log(body)
-      if (!res.ok) throw new Error(body.error || 'Unknown error')
 
       setTourneyId(body.tournament_id)
-      setPlayers(body.players)
-      setStarted(body.started)
-      // setMyUserId(body.user_id)
 
       if (body.bracket) {
         const withRoundOne: BrRow[] = body.bracket.map((m: any) => ({
@@ -285,22 +273,18 @@ const LocalTournament = () => {
         }))
         setBracket(withRoundOne)
       }
-      setLoading(false)
       return body
     } catch (err) {
       // TODO
     }
-  })
+  }, [user!.authToken])
 
   useEffect(() => {
   if (!user)
     return
-  // console.log('logged in user:', user.username)
     setAddedPlayers([user.username])
-  // console.log('logged in user id:', user.id)
-    // setCreatorId(user.id)
     joinTournament(user.id)
-  }, [user])
+  }, [user, joinTournament])
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -320,7 +304,7 @@ const LocalTournament = () => {
     setFiltered(users.filter(u => u.username.toLowerCase().includes(query.toLowerCase())));
   }, [query, users]);
 
-  const handleSelect = (username) => {
+  const handleSelect = (username: string) => {
   setSelected(username);
   setQuery(username);
   setFiltered([]);
@@ -334,6 +318,8 @@ const LocalTournament = () => {
   };
 
   const handlePasswordSubmit = async () => {
+    if (!selected)
+      return
     try{
       const response = await customFetch.post('/check_password', {
       selected,

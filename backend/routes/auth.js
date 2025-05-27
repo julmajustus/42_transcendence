@@ -37,9 +37,6 @@ const verify2FACodeSchema = {
 }
 
 module.exports = fp(async function(fastify, opts) {
-	// fastify.register(require("@fastify/jwt"), {
-		// secret: "supersecret"
-	// })
 
 	fastify.decorate("authenticate", async function(request, reply) {
 		try {

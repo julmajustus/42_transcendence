@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 10:03:53 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/26 15:54:34 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/27 11:18:43 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ const runServer = (ws, req) => {
 			const {type, payload} = JSON.parse(msg);
 			if (type === MessageType.JOIN_MULTI) {
 				console.log(payload);
-				const user = jwt.verify(payload.token, "supersecret"); // TODO: Replace with env variable
+				const user = jwt.verify(payload.token, process.env.JWT_SECRET);
 				game_server.joinGame(Number(user.id), Number(payload.game_id));
 				ws.game_id = payload.game_id;
 				ws.user_id = user.id;
@@ -37,7 +37,7 @@ const runServer = (ws, req) => {
 				//console.log(`Player with id ${Number(payload.player_id)} joined game ${payload.game_id}`);
 			}
 			else if (type === MessageType.JOIN_SINGLE) {
-				const user = jwt.verify(payload.token, "supersecret"); // TODO: Replace with env variable
+				const user = jwt.verify(payload.token, process.env.JWT_SECRET);
 				// const game = game_server.singleplayerGames.get(Number(user.id));
 				const game = game_server.singleplayerGames.get(Number(payload.game_id));
 				game.players[0].joined = true;
