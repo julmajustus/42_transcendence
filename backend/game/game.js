@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/27 15:55:46 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/28 10:41:03 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,7 +255,7 @@ class Game {
 		// Hit right paddle
 		if (ball.vx > 0) {
 			let dx = rp_sides.xLeft - ball.x;
-			if (dx > 0 && dx <= BALL_RADIUS && (ball.y > rp_sides.yTop && ball.y < rp_sides.yBot)) {
+			if (dx > 0 && dx <= BALL_RADIUS && ((ball.y + BALL_RADIUS) > rp_sides.yTop && (ball.y - BALL_RADIUS) < rp_sides.yBot)) {
 				const dy = ball.y - this.objects.right_paddle.yCenter;
 				const angle = -dy / (PADDLE_HEIGHT / 2) * max_bounce_angle;
 				ball.vx = Math.cos(angle + PI) * this.objects.ball.speed;
@@ -267,7 +267,7 @@ class Game {
 		// Hit left paddle
 		if (ball.vx < 0) {
 			let dx = ball.x - lp_sides.xRight;
-			if (dx > 0 && dx <= BALL_RADIUS && (ball.y > lp_sides.yTop && ball.y < lp_sides.yBot)) {
+			if (dx > 0 && dx <= BALL_RADIUS && ((ball.y + BALL_RADIUS) > lp_sides.yTop && (ball.y - BALL_RADIUS) < lp_sides.yBot)) {
 				const dy = ball.y - this.objects.left_paddle.yCenter;
 				const angle = dy / (PADDLE_HEIGHT / 2) * max_bounce_angle;
 				ball.vx = Math.cos(angle) * this.objects.ball.speed;

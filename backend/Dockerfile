@@ -1,14 +1,8 @@
 FROM alpine:latest
 
-RUN apk add --no-cache sqlite npm nodejs openssl
+RUN apk add --no-cache sqlite npm nodejs
 
 RUN npm install -g nodemon
-
-RUN mkdir -p /etc/transcendence/certs
-RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-	-keyout /etc/transcendence/certs/ssl.key \
-	-out /etc/transcendence/certs/ssl.crt \
-	-subj "/C=FI/ST=UUSIMA/L=HLSINKI/O=42/OU=HIVE/CN=${USER}"
 
 WORKDIR /app
 
