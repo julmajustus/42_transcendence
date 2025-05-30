@@ -244,6 +244,7 @@ const LocalTournament = () => {
   const [bracket,      setBracket]      = useState<BrRow[]>([])
   const [championName, setChampionName] = useState<string | null>(null)
   const [winnerName,   setWinnerName]   = useState<string | null>(null)
+  const [started, setStarted] = useState(false)
 
   const joinTournament = useCallback(async (playerId: number) => {
     try {
@@ -265,19 +266,26 @@ const LocalTournament = () => {
       const body = await res.json()
 
       setTourneyId(body.tournament_id)
+      setStarted(body.started)
 
       if (body.bracket) {
-        const withRoundOne: BrRow[] = body.bracket.map((m: any) => ({
+        setBracket(body.bracket)
+/*         const withRoundOne: BrRow[] = body.bracket.map((m: any) => ({
           ...m,
           round: 1,
         }))
-        setBracket(withRoundOne)
+        setBracket(withRoundOne) */
       }
       return body
     } catch (err) {
       // TODO
     }
   }, [user!.authToken])
+
+  useEffect(() => {
+    if (!tourneyId) return
+    fetchFullBracket()
+  }, [tourneyId])
 
   useEffect(() => {
   if (!user)
@@ -390,8 +398,7 @@ const LocalTournament = () => {
 	const rendererRef = useRef<GameRendererType | null>(null);
 
 	useEffect(() => {
-		if (addedPlayers.length !== 4 ||
-        !canvasRef.current ||
+		if (!canvasRef.current ||
         !user?.authToken ||
         !gameId)
 			return;
@@ -524,7 +531,7 @@ const LocalTournament = () => {
 
   const rounds = Math.max(1, ...bracket.map(b => b.round))
 
-  if (addedPlayers.length < 4) {
+  if (!started) {
     return (
       <Container>
         <SearchWrapper>
@@ -586,7 +593,7 @@ const LocalTournament = () => {
   }
 
 
-  if (addedPlayers.length === 4) {
+  // if (addedPlayers.length === 4) {
     return (
       <TournamentContainer>
     <h1>Tournament {/* #{tourneyId} */} Bracket</h1>
@@ -623,7 +630,7 @@ const LocalTournament = () => {
       </BracketGrid>
       </TournamentContainer>
     )
-  }
+  // }
 }
   
 export default LocalTournament;
