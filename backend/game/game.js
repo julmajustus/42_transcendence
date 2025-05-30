@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   game.js                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/30 10:07:31 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/30 16:07:51 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -313,16 +313,24 @@ class Game {
 	}
 
 	pause() {
-		if (this.gameState === GameState.ACTIVE)
+		if (this.gameState === GameState.ACTIVE) {
 			this.gameState = GameState.PAUSED
+			this.pauseTimestamp = Date.now()
+		}
 	}
 	
 	resume() {
-		if (this.gameState === GameState.PAUSED)
+		if (this.gameState === GameState.PAUSED) {
 			this.gameState = GameState.ACTIVE
+			this.pauseTimestamp = null
+		}
 	}
 
 	refreshGame() {
+		if (this.pauseTimestamp && Date.now() - this.pauseTimestamp > 30_000) {
+			this.resume();
+			this.pauseTimestamp = null;
+		}
 		if (this.gameState === GameState.PAUSED)
 			return
 		const roundsToWin = Math.ceil(this.total_rounds / 2)
