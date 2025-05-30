@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   matchmaking.js                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 14:45:31 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/05/12 12:37:01 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/29 23:38:10 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,8 @@ const txMutex = new Mutex();
 
 const matchmaking = async (request, reply) => {
   return txMutex.runExclusive(async () => {
-    const userId = request.user.id;
+    const gameType = request.body.game_type
+	  const userId = gameType === 'local' ? request.body.player_id : request.user.id;
     let inTransaction = false;
 
     try {
@@ -124,7 +125,10 @@ const matchmaking = async (request, reply) => {
         );
 
         // spin up the in-memory game
-        game_server.createMultiplayerGame(matchId, p1, p2);
+        if (gameType === 'local')
+          game_server.createSingleplayerGame(matchId, p1, p2);
+        else
+          game_server.createMultiplayerGame(matchId, p1, p2);
 
         await new Promise((res, rej) =>
           db.run('COMMIT', err => err ? rej(err) : res())

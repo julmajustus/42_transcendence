@@ -1,14 +1,14 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   matchmaking.js                                     :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: jmakkone <jmakkone@student.hive.fi>        +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2025/04/23 14:47:13 by jmakkone          #+#    #+#             //
-//   Updated: 2025/04/30 16:05:09 by jmakkone         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   matchmaking.js                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/23 14:47:13 by jmakkone          #+#    #+#             */
+/*   Updated: 2025/05/29 22:31:41 by mpellegr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 
 const auth = require('../routes/auth');
@@ -31,6 +31,14 @@ function matchmakingRoutes(fastify, options, done) {
   const matchmakingSchema = {
     onRequest: [ fastify.authenticate ],
     schema: {
+      body: {
+				type: 'object',
+				properties: {
+					player_id: { type: 'integer' },
+					game_type: { type: 'string' },
+				},
+				required: ['player_id', 'game_type'],
+			},
       response: {
         200: AutoResponse,
         400: errorResponse,

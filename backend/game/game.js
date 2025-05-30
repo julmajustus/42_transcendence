@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   game.js                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/28 10:41:03 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/30 10:07:31 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,8 @@ const GameState = {
 	NOT_STARTED: "not_started",
 	ACTIVE: "active",
 	RESETTING: "resetting",
-	FINSIHED: "finished"
+	FINSIHED: "finished",
+	PAUSED: "paused"
 }
 
 const Input = {
@@ -311,7 +312,19 @@ class Game {
 		return (false);
 	}
 
+	pause() {
+		if (this.gameState === GameState.ACTIVE)
+			this.gameState = GameState.PAUSED
+	}
+	
+	resume() {
+		if (this.gameState === GameState.PAUSED)
+			this.gameState = GameState.ACTIVE
+	}
+
 	refreshGame() {
+		if (this.gameState === GameState.PAUSED)
+			return
 		const roundsToWin = Math.ceil(this.total_rounds / 2)
 		this.processInputs();
 		if (this.gameState === GameState.NOT_STARTED)

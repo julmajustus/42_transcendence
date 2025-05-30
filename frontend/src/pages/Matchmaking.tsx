@@ -120,7 +120,14 @@ const Matchmaking = () => {
 			try {
 				const res = await fetch(`/api/matchmaking`, {
 					method: 'POST',
-					headers: { Authorization: `Bearer ${user.authToken}` }
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${user.authToken}`
+					},
+					body: JSON.stringify({
+						player_id: -1,
+						game_type: 'remote',
+					}),
 				});
 				const body = await res.json();
 

@@ -175,6 +175,11 @@ export class GameRenderer {
 			console.warn(`WebSocket closed: (${e.code}: ${e.reason})`);
 		});
 
+		window.addEventListener('offline', () => {
+			console.warn('You lost internet connection');
+			this.socket.close(); // Force-close the socket immediately
+		});
+
 		setInterval(this.render.bind(this), 10);
 		this.waitForConnection();
 	}

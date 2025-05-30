@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useEffect, useState, useRef,  } from "react";
+import { useEffect, useState, useRef, useCallback  } from "react";
 import { customFetch } from '../utils';
 
 import { useAuth } from '../context/AuthContext';
@@ -188,13 +188,46 @@ const LocalGame = () => {
   const [readyToRender, setReadyToRender] = useState(false)
   const navigate = useNavigate();
   const [gameId, setGameId] = useState<number | null>(null);
+	const [pendingId, setPendingId] = useState<number | null>(null);
+
+
+	const joinGame = useCallback(async (playerId: number) => {
+		try {
+			const res  = await fetch(`/api/matchmaking`, {
+				method:  'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${user!.authToken}`
+				},
+				body: JSON.stringify({
+					player_id: playerId,
+					game_type: 'local',
+				}),
+			})
+			if (!res.ok) {
+				const err = await res.json().catch(() => ({}))
+				throw new Error(err.error || res.statusText)
+			}
+			const body = await res.json()
+
+			console.log(body)
+			if (body.match_id) {
+				setGameId(body.match_id);
+			} else if (body.pending_id) {
+				setPendingId(prev => prev || body.pending_id);
+			}
+		} catch (err) {
+			toast.error('Matchmaking failed');
+		}
+	}, [user?.authToken])
 
   useEffect(() => {
 	if (!user)
 		return
 	setAddedPlayers([user.username])
-	setCreatorId(user.id)
-  }, [user])
+	// setCreatorId(user.id)
+	joinGame(user.id)
+  }, [user, joinGame])
 
   useEffect(() => {
 	const fetchUsers = async () => {
@@ -253,7 +286,7 @@ const LocalGame = () => {
 	  }
   };
 
-	useEffect(() => {
+/* 	useEffect(() => {
 		if (addedPlayers.length !== 2 || creatorId === null || !lastAdded)
 			return
 		const createLocalMatch = async () => {
@@ -275,7 +308,22 @@ const LocalGame = () => {
 			}
 		};
 		createLocalMatch();
-	}, [addedPlayers, creatorId, lastAdded]);
+	}, [addedPlayers, creatorId, lastAdded]); */
+
+	useEffect(() => {
+		if (!lastAdded)
+			return
+		const fetchAndJoin = async () => {
+			try {
+				const res = await customFetch.get(`/user/${lastAdded}`)
+				const nextUserId = res.data.id
+				await joinGame(nextUserId)
+			} catch (err) {
+			// TODO
+			}
+		}
+		fetchAndJoin()
+	}, [lastAdded])
 
 /* ********************************************************************* */
 
@@ -283,8 +331,7 @@ const LocalGame = () => {
 	const rendererRef = useRef<GameRendererType | null>(null);
 
 	useEffect(() => {
-		if (addedPlayers.length !== 2 || creatorId === null || !canvasRef.current || !user?.authToken || readyToRender === false || !gameId)
-			return;
+		if (!gameId || !user?.authToken) return;
 
 		canvasRef.current.focus();
 
@@ -342,7 +389,7 @@ const LocalGame = () => {
 			rendererRef.current = null;
 			// setTimeout(() => { navigate('/dashboard'); }, 3_000);
 		};
-	}, [addedPlayers, user?.authToken, creatorId, readyToRender]);
+	}, [gameId, user?.authToken]);
 
   return (
 	<Container>
@@ -352,7 +399,7 @@ const LocalGame = () => {
 	  width={1}
       height={1}
       />
-	{addedPlayers.length < 2 && (
+	{!gameId && (
 		<SearchWrapper>
 			<Input
 			type="text"
@@ -409,7 +456,7 @@ const LocalGame = () => {
 	</PasswordPrompt>
 	)}
 
-	{addedPlayers.length === 2 && (
+	{gameId && (
 		<GameCanvas
 		ref={canvasRef}
 		width={DEFAULT_WIDTH}
