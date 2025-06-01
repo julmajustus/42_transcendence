@@ -402,6 +402,30 @@ const getBracket = async (request, reply) => {
 			)
 		})
 
+		for (const matchRow of matches) {
+			const realMatch = await new Promise((resolve, reject) => {
+				db.get(`SELECT * FROM matches WHERE id = ?`,
+					[matchRow.game_id],
+					(err, rowFromMatches) => {
+						if (err) return reject(err);
+						resolve(rowFromMatches);
+					}
+				)
+			})
+			if (matchRow.tm_status !== 'finished' && realMatch && realMatch.status === 'finished') {
+				await new Promise((resolve, reject) => {
+					db.run(`UPDATE tournaments SET status = ? WHERE id = ?`,
+						['interrupted', tournamentId],
+						function (err) {
+							if (err) return reject(err);
+							resolve();
+						}
+					);
+				})
+				tour.status = 'interrupted'
+			}
+		}
+
 		return reply.send({ tournament: tour, matches })
 	} catch (err) {
 		request.log.error(`Error fetching bracket: ${err.message}`)

@@ -39,16 +39,16 @@ interface DecodedToken {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   // comment out this for testing with one user for each session
-  const [user, setUser] = useState<User | null>(null);
+/*   const [user, setUser] = useState<User | null>(null);
   useEffect(() => {
     if (user)
       sessionStorage.setItem('authUser', JSON.stringify(user))
     else
       sessionStorage.removeItem('authUser')
-  }, [user])
+  }, [user]) */
 
   // comment out this for storing only in localhost and having 1 user for all sessions
-/*   const [user, setUser] = useState<User | null>(() => {
+  const [user, setUser] = useState<User | null>(() => {
     const stored = localStorage.getItem('user')
     return stored ? JSON.parse(stored) as User : null
     })
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(toastTimer)
       clearTimeout(logoutTimer)
     }
-  }, [user]) */
+  }, [user])
 
   const login = (userData: { username: string; authToken: string }) => {
     try {

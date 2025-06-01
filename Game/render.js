@@ -323,6 +323,13 @@ export class GameRenderer {
 		else if (this.state.game_state === "finished") {
 			this.drawResult(this.state.winner);
 		}
+		else if (this.state.game_state === "paused") {
+			this.ctx.fillStyle = WHITE;
+			this.ctx.font = "20px 'Press Start 2P'";
+			this.ctx.textAlign = "center"
+			this.ctx.fillText("Other player is disconnected", this.board_width / 2, this.board_height / 2);
+			this.ctx.fillText(`Game resumes in ${this.state.remaining_timeout}...`, this.board_width / 2, this.board_height / 2 + 30);
+		}
 	}
 
 	render() {

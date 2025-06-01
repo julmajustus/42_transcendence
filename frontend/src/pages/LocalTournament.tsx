@@ -245,6 +245,7 @@ const LocalTournament = () => {
   const [championName, setChampionName] = useState<string | null>(null)
   const [winnerName,   setWinnerName]   = useState<string | null>(null)
   const [started, setStarted] = useState(false)
+  const [interrupted, setInterrupted] = useState(false)
 
   const joinTournament = useCallback(async (playerId: number) => {
     try {
@@ -380,6 +381,10 @@ const LocalTournament = () => {
 
       const { tournament, matches } = await resp.json()
       setBracket(matches as BrRow[])
+      if (tournament.status === 'interrupted') {
+        setInterrupted(true)
+        return
+      }
 
       if (tournament.status === 'completed' && !championName) {
         const info = await (
@@ -525,6 +530,15 @@ const LocalTournament = () => {
           height={DEFAULT_HEIGHT}
           tabIndex={0}
         />
+      </TournamentContainer>
+    )
+  }
+
+  if (interrupted) {
+    return (
+      <TournamentContainer>
+        <h2>User disconected for more than 30 seconds</h2>
+        <h2>Please refresh the page to start a new tournament</h2>
       </TournamentContainer>
     )
   }

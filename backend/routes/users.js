@@ -29,7 +29,8 @@ const User = {
 		email: { type: 'string' },
 		avatar: { type: 'string'},
 		online_status: {type : 'string' },
-		two_fa: { type: 'integer' }
+		two_fa: { type: 'integer' },
+		google_id: { type: 'integer' }
 	}
 }
 

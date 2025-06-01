@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   game.js                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/30 16:07:51 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/31 17:07:20 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -318,7 +318,7 @@ class Game {
 			this.pauseTimestamp = Date.now()
 		}
 	}
-	
+
 	resume() {
 		if (this.gameState === GameState.PAUSED) {
 			this.gameState = GameState.ACTIVE
@@ -331,8 +331,10 @@ class Game {
 			this.resume();
 			this.pauseTimestamp = null;
 		}
-		if (this.gameState === GameState.PAUSED)
+		if (this.gameState === GameState.PAUSED) {
+			this.remainingTimout = 30000 - (Date.now() - this.pauseTimestamp)
 			return
+		}
 		const roundsToWin = Math.ceil(this.total_rounds / 2)
 		this.processInputs();
 		if (this.gameState === GameState.NOT_STARTED)

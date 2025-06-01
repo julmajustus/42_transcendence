@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 10:03:53 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/30 10:14:31 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/01 01:43:33 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,20 @@ const jwt = require("jsonwebtoken");
 
 const game_server = new GameServer();
 
+const HEARTBEAT_INTERVAL = 5_000
+
 // Don't run the server async processes or they break the tests
 if (process.env.NODE_ENV !== 'test') {
 	game_server.setupIntervals();
 }
 
 const runServer = (ws, req) => {
+	ws.isAlive = true
+
+	ws.on('pong', () => {
+		ws.isAlive = true
+	})
+
 	ws.on('close', (code, reason) => {
 		const gamesMap = ws.game_type === GameType.MULTI_PLAYER ? game_server.multiplayerGames : game_server.singleplayerGames
 		const game = gamesMap.get(Number(ws.game_id))
@@ -34,9 +42,9 @@ const runServer = (ws, req) => {
 
 		const msg = JSON.stringify({ type: MessageType.STATE, payload: game.state });
 		game_server.sockets.forEach(s => {
-		if (s.game_id == ws.game_id && s.readyState === WebSocket.OPEN) {
-			s.send(msg);
-		}
+			if (s.game_id == ws.game_id && s.readyState === WebSocket.OPEN) {
+				s.send(msg);
+			}
 		});
 
 		game_server.sockets.delete(ws)
@@ -246,5 +254,17 @@ const getGame = (request, reply) => {
 		return reply.status(200).send(row);
 	})
 };
+
+const interval = setInterval(() => {
+	for (let ws of game_server.sockets) {
+		if (ws.isAlive === false) {
+			console.log(`Terminating dead connection for user ${ws.user_id}`)
+			ws.terminate()
+			continue
+		}
+		ws.isAlive = false
+		ws.ping()
+	}
+}, HEARTBEAT_INTERVAL)
 
 module.exports = { runServer, createNewMultiplayerGame, createNewSinglePlayerGame, listGames, getGame, game_server }
