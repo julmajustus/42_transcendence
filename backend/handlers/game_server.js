@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   game_server.js                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 10:03:53 by pleander          #+#    #+#             */
-/*   Updated: 2025/06/01 01:43:33 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/02 14:26:48 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,16 +255,18 @@ const getGame = (request, reply) => {
 	})
 };
 
-const interval = setInterval(() => {
-	for (let ws of game_server.sockets) {
-		if (ws.isAlive === false) {
-			console.log(`Terminating dead connection for user ${ws.user_id}`)
-			ws.terminate()
-			continue
+if (process.env.NODE_ENV !== 'test') {
+	const interval = setInterval(() => {
+		for (let ws of game_server.sockets) {
+			if (ws.isAlive === false) {
+				console.log(`Terminating dead connection for user ${ws.user_id}`)
+				ws.terminate()
+				continue
+			}
+			ws.isAlive = false
+			ws.ping()
 		}
-		ws.isAlive = false
-		ws.ping()
-	}
-}, HEARTBEAT_INTERVAL)
+	}, HEARTBEAT_INTERVAL)
+}
 
 module.exports = { runServer, createNewMultiplayerGame, createNewSinglePlayerGame, listGames, getGame, game_server }
