@@ -210,7 +210,6 @@ const LocalGame = () => {
 			}
 			const body = await res.json()
 
-			console.log(body)
 			if (body.match_id) {
 				setGameId(body.match_id);
 			} else if (body.pending_id) {

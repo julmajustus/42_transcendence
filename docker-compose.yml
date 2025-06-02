@@ -15,9 +15,6 @@ services:
       - avatar-uploads:/app/uploads/avatars
       - ./backend:/app:rw
       - /app/node_modules
-    environment:
-      - SQLITE_DB_PATH=/data/database.sqlite
-      - USER=${USER}
     env_file:
       - .env
     depends_on:

@@ -292,7 +292,7 @@ const UserSettings = () => {
 	
 	const handleToggle2FA = () => {
 		if (gmailAuth === true) {
-			toast.error('2FA is not available ig logged in with google')
+			toast.error('2FA is not available if logged in with google')
 			return
 		}
 		setTwoFAEnabled(prev => !prev)
