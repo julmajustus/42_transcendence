@@ -82,7 +82,7 @@ const registerUserSchema = {
 					type: 'string',
 					minLength: 3,
 					maxLength: 20,
-					pattern: '^[A-Za-z0-9_]+$'
+					pattern: '^(?!\\d+$)[A-Za-z0-9_]+$'
 				},
 				password: {
 					type: 'string',
@@ -114,7 +114,7 @@ const loginUserSchema = {
 					type: 'string',
 					minLength: 3,
 					maxLength: 20,
-					pattern: '^[A-Za-z0-9_]+$'
+					pattern: '^(?!\\d+$)[A-Za-z0-9_]+$'
 				},
 				password: {
 					type: 'string',
@@ -251,7 +251,7 @@ function usersRoutes(fastify, options, done) {
 						type: 'string',
 						minLength: 3,
 						maxLength: 20,
-						pattern: '^[A-Za-z0-9_]+$'
+						pattern: '^(?!\\d+$)[A-Za-z0-9_]+$'
 					},
 					twoFA: {
 						type: 'integer',

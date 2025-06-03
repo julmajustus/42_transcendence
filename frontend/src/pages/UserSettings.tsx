@@ -323,7 +323,7 @@ const UserSettings = () => {
 			return
 
 		const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-		const userRe = /^[A-Za-z0-9_]{3,20}$/
+		const userRe = /^(?!\d+$)[A-Za-z0-9_]{3,20}$/
 		const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
 		if (newPassword && newPassword !== confirmPassword) {
@@ -336,7 +336,7 @@ const UserSettings = () => {
 		}
 		if (newUsername) {
 			if (!userRe.test(newUsername)) {
-				toast.error('Username must be 3–20 characters and contain only letters, numbers, or underscore');
+				toast.error('Username must be 3–20 characters and contain only letters, numbers, or underscore and cannot be only numbers');
 				return;
 			}
 		}

@@ -140,10 +140,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const username = (formData.get('username') || '').toString().trim()
   const password = (formData.get('password') || '').toString();
 
-  const userRe = /^[A-Za-z0-9_]{3,20}$/
+  const userRe = /^(?!\d+$)[A-Za-z0-9_]{3,20}$/
   const errors: string[] = []
   if (!userRe.test(username))
-    errors.push('Username must be 3–20 characters and contain only letters, numbers, or underscore')
+    errors.push('Username must be 3–20 characters and contain only letters, numbers, or underscore and cannot be only numbers')
   if (password.length === 0)
     errors.push('Password cannot be empty')
   if (errors.length) {
