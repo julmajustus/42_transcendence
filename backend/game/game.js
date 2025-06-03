@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/06/03 10:39:53 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/03 13:33:46 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -333,10 +333,10 @@ class Game {
 	}
 
 	refreshGame() {
-		if (this.pauseTimestamp && Date.now() - this.pauseTimestamp > 30_000) {
+/* 		if (this.pauseTimestamp && Date.now() - this.pauseTimestamp > 30_000) {
 			this.resume();
 			this.pauseTimestamp = null;
-		}
+		} */
 		if (this.gameState === GameState.PAUSED) {
 			this.remainingTimout = 30000 - (Date.now() - this.pauseTimestamp)
 			return

@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:40:51 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/15 17:30:37 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/03 14:12:21 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,6 +148,10 @@ class GameServer {
 	refreshGames() {
 		this.multiplayerGames.forEach((game, game_id) => {
 			game.refreshGame();
+			if (game.pauseTimestamp && Date.now() - game.pauseTimestamp > 30_000) {
+				game.resume();
+				game.pauseTimestamp = null;
+			}
 			if (game.gameState === GameState.FINSIHED) {
 				this.finishGame(game, game_id);
 			}
@@ -155,6 +159,22 @@ class GameServer {
 		// this.singleplayerGames.forEach((game, player_id) => {
 		this.singleplayerGames.forEach((game, game_id) => {
 			game.refreshGame();
+			if (game.pauseTimestamp && Date.now() - game.pauseTimestamp > 30_000) {
+				game.pauseTimestamp = null;
+				game.gameState = 'interrupted'
+				db.run(
+					'UPDATE matches SET status = ? WHERE id = ?',
+					['interrupted', game_id],
+					function (err) {
+						if (err) {
+						console.error(`Failed to update match ${game_id}:`, err);
+						return;
+						}
+						console.log(`Match ${game_id} marked interrupted (rows changed: ${this.changes})`);
+					}
+				);
+				this.singleplayerGames.delete(game_id)
+			}
 			// Single player game ending here.. yeah not pretty
 			if (game.gameState === GameState.FINSIHED) {
 				new Promise((resolve, reject) => { //last point was not stored indatabase

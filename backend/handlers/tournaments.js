@@ -412,7 +412,7 @@ const getBracket = async (request, reply) => {
 					}
 				)
 			})
-			if (matchRow.tm_status !== 'finished' && realMatch && realMatch.status === 'finished') {
+			if (matchRow.tm_status !== 'finished' && realMatch && realMatch.status === 'interrupted') {
 				await new Promise((resolve, reject) => {
 					db.run(`UPDATE tournaments SET status = ? WHERE id = ?`,
 						['interrupted', tournamentId],

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   matchmaking.js                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 14:45:31 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/05/29 23:38:10 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/03 14:23:44 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,7 +148,7 @@ const matchmaking = async (request, reply) => {
                 ON m.id = pm.match_id
             WHERE pmp.user_id = ?
               AND pm.match_id IS NOT NULL
-              AND m.status    != 'finished'
+              AND m.status NOT IN ('finished', 'interrupted')
             LIMIT 1
           `,
           [userId],
