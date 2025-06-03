@@ -163,7 +163,12 @@ const loginUser = async (request, reply) => {
 
 			const now = Math.floor(Date.now() / 1000)
 			await new Promise((resolve, reject) => {
-				db.run('UPDATE users SET online_status = ?, last_seen = ? WHERE id = ?', ['online', now, user.id], (err) => {
+				db.run(`UPDATE users
+						SET online_status = ?,
+							last_seen = ?,
+							google_id = ?
+						WHERE id = ?`,
+					['online', now, null, user.id], (err) => {
 					if (err)
 						return reject(err)
 					resolve()

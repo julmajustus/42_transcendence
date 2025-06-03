@@ -19,9 +19,16 @@ const verify2FACode = async(request, reply) => {
 		if (user.two_fa_code !== code || Date.now() > user.two_fa_code_expiration) {
 			return reply.status(401).send({ error: 'Invalid or expired 2FA code' });
 		}
+		const now = Math.floor(Date.now() / 1000)
 		await new Promise((resolve, reject) => {
-			db.run('UPDATE users SET two_fa_code = NULL, two_fa_code_expiration = NULL, online_status = ? WHERE id = ?',
-				['online', user.id],
+			db.run(`UPDATE users
+					SET two_fa_code = ?,
+						two_fa_code_expiration = ?,
+						online_status = ?,
+						last_seen = ?,
+						google_id = ?
+					WHERE id = ?`,
+				[null, null, 'online', now, null, user.id],
 				(err) => {
 				if (err)
 					return reject(err)

@@ -292,8 +292,12 @@ const UserSettings = () => {
 	
 	const handleToggle2FA = () => {
 		if (gmailAuth === true) {
-			toast.error('2FA is not available if logged in with google')
-			return
+			toast.info(
+				<div>
+				You are currently logged in with a Google account.<br />
+				You can change settings for 2FA but they will affect only classic login.
+				</div>
+			)
 		}
 		setTwoFAEnabled(prev => !prev)
 		setTimeout(() => {
@@ -309,10 +313,20 @@ const UserSettings = () => {
 		setChangingPassword(true)
 	}
 	
+	let i:number = 0
 	const handleChangeEmail = () => {
 		if (gmailAuth === true) {
-			toast.error('Change email is not possible if logged in with google')
-			return
+			i++
+			if (i === 1) {
+				toast.info(
+					<div>
+					You are currently logged in with a Google account.<br />
+					Changing email means you won't be able to log in with Google.<br />
+					If you're fine with it, click on change email again.
+					</div>
+				)
+				return
+			}
 		}
 		setChangingEmail(true)
 	}
