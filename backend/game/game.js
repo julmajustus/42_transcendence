@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   game.js                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mpellegr <mpellegr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/31 17:07:20 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/03 10:39:53 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,7 +258,10 @@ class Game {
 			let dx = rp_sides.xLeft - ball.x;
 			if (dx > 0 && dx <= BALL_RADIUS && ((ball.y + BALL_RADIUS) > rp_sides.yTop && (ball.y - BALL_RADIUS) < rp_sides.yBot)) {
 				const dy = ball.y - this.objects.right_paddle.yCenter;
-				const angle = -dy / (PADDLE_HEIGHT / 2) * max_bounce_angle;
+				let fraction = -dy / (PADDLE_HEIGHT / 2)
+				if (fraction > 1) fraction = 1;
+				if (fraction < -1) fraction = -1;
+				const angle = fraction * max_bounce_angle;
 				ball.vx = Math.cos(angle + PI) * this.objects.ball.speed;
 				ball.vy = Math.sin(angle + PI) * this.objects.ball.speed;
 				this.objects.ball.speed = this.objects.ball.speed * 1.1
@@ -270,7 +273,10 @@ class Game {
 			let dx = ball.x - lp_sides.xRight;
 			if (dx > 0 && dx <= BALL_RADIUS && ((ball.y + BALL_RADIUS) > lp_sides.yTop && (ball.y - BALL_RADIUS) < lp_sides.yBot)) {
 				const dy = ball.y - this.objects.left_paddle.yCenter;
-				const angle = dy / (PADDLE_HEIGHT / 2) * max_bounce_angle;
+				let fraction = dy / (PADDLE_HEIGHT / 2)
+				if (fraction > 1) fraction = 1;
+				if (fraction < -1) fraction = -1;
+				const angle = fraction * max_bounce_angle;
 				ball.vx = Math.cos(angle) * this.objects.ball.speed;
 				ball.vy = Math.sin(angle) * this.objects.ball.speed;
 				this.objects.ball.speed = this.objects.ball.speed * 1.1
