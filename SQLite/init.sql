@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
 	started_at DATETIME,
 	finished_at DATETIME,
 	winner_id INTEGER,
+	game_type TEXT,
 	FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (winner_id) REFERENCES users(id)
 );

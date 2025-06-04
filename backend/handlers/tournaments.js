@@ -1,5 +1,7 @@
 const db = require('../db');
 const { game_server } = require('./game_server');
+const { Mutex } = require('async-mutex');
+const txMutex = new Mutex();
 
 const startTournament = async (tournamentId, gameType) => {
 	await new Promise((resolve, reject) => {
@@ -121,171 +123,173 @@ const startTournament = async (tournamentId, gameType) => {
 // Combine the logic of creating, joining and starting the tournament under one endpoint
 //
 const tournament = async (request, reply) => {
-	const gameType = request.body.game_type
-	const userId = gameType === 'local' ? request.body.player_id : request.user.id;
+	return txMutex.runExclusive(async () => {
+		const gameType = request.body.game_type
+		const userId = gameType === 'local' ? request.body.player_id : request.user.id;
 
-	try {
-		// Check does the user already belong to a pending/active tournament
-		const existing = await new Promise((res, rej) => {
-			db.get(
-				`SELECT t.id, t.status
-		   FROM tournaments t
-		   JOIN tournament_players tp
-			 ON tp.tournament_id = t.id
-		  WHERE tp.user_id = ?
-			AND t.status IN ('pending','active')
-		  ORDER BY t.created_at DESC
-		  LIMIT 1`,
-				[userId],
-				(err, row) => (err ? rej(err) : res(row))
-			);
-		});
-
-		let tournamentId, tourStatus;
-		if (existing) {
-			// reuse whatever tournament we’re already in (pending or active)
-			tournamentId = existing.id;
-			tourStatus   = existing.status;
-		} else {
-			// Otherwise, find any other pending tournament with < 4 players
-			const row = await new Promise((res, rej) => {
+		try {
+			// Check does the user already belong to a pending/active tournament
+			const existing = await new Promise((res, rej) => {
 				db.get(
-					`SELECT t.id, COUNT(tp.user_id) AS cnt
-			 FROM tournaments t
-		LEFT JOIN tournament_players tp
-			   ON tp.tournament_id = t.id
-			WHERE t.status = 'pending'
-			GROUP BY t.id
-		   HAVING cnt < 4
-		   ORDER BY t.created_at
-		   LIMIT 1`,
-					[],
+					`SELECT t.id, t.status
+			FROM tournaments t
+			JOIN tournament_players tp
+				ON tp.tournament_id = t.id
+			WHERE tp.user_id = ?
+				AND t.status IN ('pending','active')
+				AND t.game_type = ?
+			ORDER BY t.created_at DESC
+			LIMIT 1`,
+					[userId, gameType],
+					(err, row) => (err ? rej(err) : res(row))
+				);
+			});
+
+			let tournamentId, tourStatus;
+			if (existing) {
+				// reuse whatever tournament we’re already in (pending or active)
+				tournamentId = existing.id;
+				tourStatus   = existing.status;
+			} else {
+				// Otherwise, find any other pending tournament with < 4 players
+				const row = await new Promise((res, rej) => {
+					db.get(
+						`SELECT t.id, COUNT(tp.user_id) AS cnt
+				FROM tournaments t
+			LEFT JOIN tournament_players tp
+				ON tp.tournament_id = t.id
+				WHERE t.status = 'pending'
+					AND t.game_type = ?
+				GROUP BY t.id
+			HAVING cnt < 4
+			ORDER BY t.created_at
+			LIMIT 1`,
+						[gameType],
+						(err, r) => (err ? rej(err) : res(r))
+					);
+				});
+
+				if (row) {
+					tournamentId = row.id;
+					tourStatus   = 'pending';
+				} else {
+					// If no lobby to join, create a fresh one
+					tournamentId = await new Promise((res, rej) => {
+						db.run(
+							`INSERT INTO tournaments (name, owner_id, game_type) VALUES (?, ?, ?)`,
+							['Quick Tournament', userId, gameType],
+							function (err) { err ? rej(err) : res(this.lastID); }
+						);
+					});
+					tourStatus = 'pending';
+				}
+			}
+
+			// Auto-join the lobby if it’s still pending
+			if (tourStatus === 'pending') {
+				const already = await new Promise((res, rej) => {
+					db.get(
+						`SELECT 1
+						FROM tournament_players
+						WHERE tournament_id = ? AND user_id = ?`,
+						[tournamentId, userId],
+						(err, r) => (err ? rej(err) : res(!!r))
+					);
+				});
+				if (!already) {
+					await new Promise((res, rej) => {
+						db.run(
+							`INSERT OR IGNORE INTO tournament_players (tournament_id, user_id) VALUES (?, ?)`,
+							[tournamentId, userId],
+							err => (err ? rej(err) : res())
+						);
+					});
+				}
+			}
+
+			// Count how many players are now in
+			const { count } = await new Promise((res, rej) => {
+				db.get(
+					`SELECT COUNT(*) AS count
+					FROM tournament_players
+					WHERE tournament_id = ?`,
+					[tournamentId],
 					(err, r) => (err ? rej(err) : res(r))
 				);
 			});
 
-			if (row) {
-				tournamentId = row.id;
-				tourStatus   = 'pending';
-			} else {
-				// If no lobby to join, create a fresh one
-				tournamentId = await new Promise((res, rej) => {
-					db.run(
-						`INSERT INTO tournaments (name, owner_id)
-			   VALUES (?, ?)`,
-						['Quick Tournament', userId],
-						function (err) { err ? rej(err) : res(this.lastID); }
-					);
-				});
-				tourStatus = 'pending';
+			// If we just hit 4 *and* it was still pending, start it
+			if (tourStatus === 'pending' && count >= 4) {
+				try {
+					await startTournament(tournamentId, gameType);
+					tourStatus = 'active';
+				} catch (err) {
+					if (err.message.includes('SQLITE_CONSTRAINT')) {
+						request.log.warn('Tournament already started by concurrent request');
+						tourStatus = 'active'; // Already active
+					} else throw err;
+				}
 			}
-		}
 
-		// Auto-join the lobby if it’s still pending
-		if (tourStatus === 'pending') {
-			const already = await new Promise((res, rej) => {
-				db.get(
-					`SELECT 1
-			 FROM tournament_players
-			WHERE tournament_id = ? AND user_id = ?`,
-					[tournamentId, userId],
-					(err, r) => (err ? rej(err) : res(!!r))
-				);
-			});
-			if (!already) {
-				await new Promise((res, rej) => {
-					db.run(
-						`INSERT OR IGNORE INTO tournament_players (tournament_id, user_id)
-	   VALUES (?, ?)`,
-						[tournamentId, userId],
-						err => (err ? rej(err) : res())
-					);
-				});
-			}
-		}
-
-		// Count how many players are now in
-		const { count } = await new Promise((res, rej) => {
-			db.get(
-				`SELECT COUNT(*) AS count
-		   FROM tournament_players
-		  WHERE tournament_id = ?`,
-				[tournamentId],
-				(err, r) => (err ? rej(err) : res(r))
-			);
-		});
-
-		// If we just hit 4 *and* it was still pending, start it
-		if (tourStatus === 'pending' && count >= 4) {
-			try {
-				await startTournament(tournamentId, gameType);
-				tourStatus = 'active';
-			} catch (err) {
-				if (err.message.includes('SQLITE_CONSTRAINT')) {
-					request.log.warn('Tournament already started by concurrent request');
-					tourStatus = 'active'; // Already active
-				} else throw err;
-			}
-		}
-
-		// Fetch the current lobby players
-		const players = await new Promise((res, rej) => {
-			db.all(
-				`SELECT u.id, u.username
-		   FROM tournament_players tp
-		   JOIN users u ON u.id = tp.user_id
-		  WHERE tp.tournament_id = ?`,
-				[tournamentId],
-				(err, rows) => (err ? rej(err) : res(rows))
-			);
-		});
-
-		// If active, fetch just Round 1 bracket with usernames
-		let bracket = null;
-		if (tourStatus !== 'pending') {
-			bracket = await new Promise((res, rej) => {
+			// Fetch the current lobby players
+			const players = await new Promise((res, rej) => {
 				db.all(
-					`
-		  SELECT
-			tm.id           AS tm_id,
-			tm.match_id     AS game_id,
-			tm.status       AS tm_status,
-			p1.user_id      AS player1_id,
-			u1.username     AS player1_username,
-			p2.user_id      AS player2_id,
-			u2.username     AS player2_username
-		  FROM tournament_matches tm
-		  LEFT JOIN tournament_players p1
-			ON p1.id = tm.player1_slot
-		  LEFT JOIN users u1
-			ON u1.id = p1.user_id
-		  LEFT JOIN tournament_players p2
-			ON p2.id = tm.player2_slot
-		  LEFT JOIN users u2
-			ON u2.id = p2.user_id
-		  WHERE tm.tournament_id = ? AND tm.round = 1
-		  ORDER BY tm.id
-		  `,
+					`SELECT u.id, u.username
+					FROM tournament_players tp
+					JOIN users u ON u.id = tp.user_id
+					WHERE tp.tournament_id = ?`,
 					[tournamentId],
 					(err, rows) => (err ? rej(err) : res(rows))
 				);
 			});
-		}
 
-		// Return everything our front-end needs
-		return reply.send({
-			tournament_id: tournamentId,
-			player_count:  count,
-			players,
-			bracket,
-			started: tourStatus !== 'pending',
-			user_id: userId
-		});
-	}
-	catch (err) {
-		request.log.error(`autoTournament error: ${err.message}`);
-		return reply.status(500).send({ error: 'Internal server error' });
-	}
+			// If active, fetch just Round 1 bracket with usernames
+			let bracket = null;
+			if (tourStatus !== 'pending') {
+				bracket = await new Promise((res, rej) => {
+					db.all(
+						`
+						SELECT
+							tm.id           AS tm_id,
+							tm.match_id     AS game_id,
+							tm.status       AS tm_status,
+							p1.user_id      AS player1_id,
+							u1.username     AS player1_username,
+							p2.user_id      AS player2_id,
+							u2.username     AS player2_username
+						FROM tournament_matches tm
+						LEFT JOIN tournament_players p1
+							ON p1.id = tm.player1_slot
+						LEFT JOIN users u1
+							ON u1.id = p1.user_id
+						LEFT JOIN tournament_players p2
+							ON p2.id = tm.player2_slot
+						LEFT JOIN users u2
+							ON u2.id = p2.user_id
+						WHERE tm.tournament_id = ? AND tm.round = 1
+						ORDER BY tm.id
+						`,
+						[tournamentId],
+						(err, rows) => (err ? rej(err) : res(rows))
+					);
+				});
+			}
+
+			// Return everything our front-end needs
+			return reply.send({
+				tournament_id: tournamentId,
+				player_count:  count,
+				players,
+				bracket,
+				started: tourStatus !== 'pending',
+				user_id: userId
+			});
+		}
+		catch (err) {
+			request.log.error(`autoTournament error: ${err.message}`);
+			return reply.status(500).send({ error: 'Internal server error' });
+		}
+	})
 }
 
 // List all tournaments.
