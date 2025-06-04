@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 14:47:13 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/06/04 11:42:57 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/04 13:50:59 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,8 @@ function matchmakingRoutes(fastify, options, done) {
 				properties: {
 					player_id: { type: 'integer' },
 					game_type: { type: 'string' },
-          player_index: { type: 'integer' }
+          player_index: { type: 'integer' },
+          pending_id: { type: 'integer' }
 				},
 				required: ['player_id', 'game_type'],
 			},

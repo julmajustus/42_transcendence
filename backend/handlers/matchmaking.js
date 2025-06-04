@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 14:45:31 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/06/04 13:34:29 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/04 13:53:55 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ const matchmaking = async (request, reply) => {
 	  const userId = gameType === 'local' ? request.body.player_id : request.user.id;
     let inTransaction = false;
     const playerIndex = request.body.player_index
+    const matchPendingId = request.body.pending_id
 
     try {
       // BEGIN TRANSACTION to serialize concurrent callers
@@ -94,7 +95,9 @@ const matchmaking = async (request, reply) => {
       }
 
       if (joinRow) {
-        const pendingId = joinRow.pending_id;
+        let pendingId = joinRow.pending_id;
+        if (gameType === 'local' && playerIndex === 2 && matchPendingId !== -1)
+          pendingId = matchPendingId
 
         // add the second player
         await new Promise((res, rej) =>
