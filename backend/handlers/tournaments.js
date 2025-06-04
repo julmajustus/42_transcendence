@@ -126,6 +126,8 @@ const tournament = async (request, reply) => {
 	return txMutex.runExclusive(async () => {
 		const gameType = request.body.game_type
 		const userId = gameType === 'local' ? request.body.player_id : request.user.id;
+		const playerIndex = request.body.player_index
+		const tournamentPendingId = request.body.tournament_id
 
 		try {
 			// Check does the user already belong to a pending/active tournament
@@ -152,25 +154,32 @@ const tournament = async (request, reply) => {
 				tourStatus   = existing.status;
 			} else {
 				// Otherwise, find any other pending tournament with < 4 players
-				const row = await new Promise((res, rej) => {
-					db.get(
-						`SELECT t.id, COUNT(tp.user_id) AS cnt
-				FROM tournaments t
-			LEFT JOIN tournament_players tp
-				ON tp.tournament_id = t.id
-				WHERE t.status = 'pending'
-					AND t.game_type = ?
-				GROUP BY t.id
-			HAVING cnt < 4
-			ORDER BY t.created_at
-			LIMIT 1`,
-						[gameType],
-						(err, r) => (err ? rej(err) : res(r))
-					);
-				});
+				let row
+				if (gameType === 'local' && playerIndex === 1)
+					row = null
+				else {
+					row = await new Promise((res, rej) => {
+						db.get(
+							`SELECT t.id, COUNT(tp.user_id) AS cnt
+					FROM tournaments t
+				LEFT JOIN tournament_players tp
+					ON tp.tournament_id = t.id
+					WHERE t.status = 'pending'
+						AND t.game_type = ?
+					GROUP BY t.id
+				HAVING cnt < 4
+				ORDER BY t.created_at
+				LIMIT 1`,
+							[gameType],
+							(err, r) => (err ? rej(err) : res(r))
+						);
+					});
+				}
 
 				if (row) {
 					tournamentId = row.id;
+					if (gameType === 'local' && playerIndex !== 1 && tournamentPendingId !== -1)
+						tournamentId = tournamentPendingId
 					tourStatus   = 'pending';
 				} else {
 					// If no lobby to join, create a fresh one

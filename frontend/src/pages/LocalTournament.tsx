@@ -247,7 +247,7 @@ const LocalTournament = () => {
   const [started, setStarted] = useState(false)
   const [interrupted, setInterrupted] = useState(false)
 
-  const joinTournament = useCallback(async (playerId: number) => {
+  const joinTournament = useCallback(async (playerId: number, playerIndex: number, t_id: number) => {
     try {
       const res  = await fetch(`/api/tournament/auto`, {
         method:  'POST',
@@ -258,6 +258,8 @@ const LocalTournament = () => {
         body: JSON.stringify({
           player_id: playerId,
           game_type: 'local',
+          player_index: playerIndex,
+          tournament_id: t_id
         }),
       })
       if (!res.ok) {
@@ -292,7 +294,7 @@ const LocalTournament = () => {
   if (!user)
     return
     setAddedPlayers([user.username])
-    joinTournament(user.id)
+    joinTournament(user.id, 1, -1)
   }, [user, joinTournament])
 
   useEffect(() => {
@@ -354,6 +356,7 @@ const LocalTournament = () => {
       }
     };
 
+  let i:number = 2
   useEffect(() => {
     if (!lastAdded)
       return
@@ -361,7 +364,8 @@ const LocalTournament = () => {
       try {
         const res = await customFetch.get(`/user/${lastAdded}`)
         const nextUserId = res.data.id
-        await joinTournament(nextUserId)
+        await joinTournament(nextUserId, i, tourneyId)
+        i++
       } catch (err) {
         // TODO
       }
