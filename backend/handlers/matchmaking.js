@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 14:45:31 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/06/03 14:23:44 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/04 13:34:29 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ const matchmaking = async (request, reply) => {
     const gameType = request.body.game_type
 	  const userId = gameType === 'local' ? request.body.player_id : request.user.id;
     let inTransaction = false;
+    const playerIndex = request.body.player_index
 
     try {
       // BEGIN TRANSACTION to serialize concurrent callers
@@ -62,28 +63,35 @@ const matchmaking = async (request, reply) => {
       );
 
       // Join somebody else's open lobby (exactly 1 other player)
-      const joinRow = await new Promise((res, rej) =>
-        db.get(
-          `
-            SELECT pm.id AS pending_id
-              FROM pending_matches pm
-              JOIN pending_match_players pmp
-                ON pmp.pending_id = pm.id
-            WHERE pm.status = 'open'
-              AND pm.id NOT IN (
-                SELECT pending_id
-                  FROM pending_match_players
-                  WHERE user_id = ?
-              )
-            GROUP BY pm.id
-            HAVING COUNT(*) = 1
-            ORDER BY pm.created_at ASC
-            LIMIT 1
-          `,
-          [userId],
-          (err, row) => err ? rej(err) : res(row)
-        )
-      );
+      let joinRow
+      if (gameType === 'local' && playerIndex === 1)
+        joinRow = null
+      else {
+        joinRow = await new Promise((res, rej) =>
+          db.get(
+            `
+              SELECT pm.id AS pending_id
+                FROM pending_matches pm
+                JOIN pending_match_players pmp
+                  ON pmp.pending_id = pm.id
+              WHERE pm.status = 'open'
+                AND pm.game_type = pmp.game_type
+                AND pm.game_type = ?
+                AND pm.id NOT IN (
+                  SELECT pending_id
+                    FROM pending_match_players
+                    WHERE user_id = ?
+                )
+              GROUP BY pm.id
+              HAVING COUNT(*) = 1
+              ORDER BY pm.created_at ASC
+              LIMIT 1
+            `,
+            [gameType, userId],
+            (err, row) => err ? rej(err) : res(row)
+          )
+        );
+      }
 
       if (joinRow) {
         const pendingId = joinRow.pending_id;
@@ -91,8 +99,8 @@ const matchmaking = async (request, reply) => {
         // add the second player
         await new Promise((res, rej) =>
           db.run(
-            'INSERT INTO pending_match_players (pending_id, user_id) VALUES (?, ?)',
-            [pendingId, userId],
+            'INSERT INTO pending_match_players (pending_id, user_id, game_type) VALUES (?, ?, ?)',
+            [pendingId, userId, gameType],
             err => err ? rej(err) : res()
           )
         );
@@ -137,24 +145,31 @@ const matchmaking = async (request, reply) => {
       }
 
       // Did user just get promoted by someone else
-      const doneRow = await new Promise((res, rej) =>
-        db.get(
-          `
-            SELECT pm.match_id
-              FROM pending_matches pm
-              JOIN pending_match_players pmp
-                ON pmp.pending_id = pm.id
-              JOIN matches m
-                ON m.id = pm.match_id
-            WHERE pmp.user_id = ?
-              AND pm.match_id IS NOT NULL
-              AND m.status NOT IN ('finished', 'interrupted')
-            LIMIT 1
-          `,
-          [userId],
-          (err, row) => err ? rej(err) : res(row)
-        )
-      );
+      let doneRow
+      if (gameType === 'local' && playerIndex === 1)
+        doneRow = null
+      else {
+        doneRow = await new Promise((res, rej) =>
+          db.get(
+            `
+              SELECT pm.match_id
+                FROM pending_matches pm
+                JOIN pending_match_players pmp
+                  ON pmp.pending_id = pm.id
+                JOIN matches m
+                  ON m.id = pm.match_id
+              WHERE pmp.user_id = ?
+                AND pm.match_id IS NOT NULL
+                AND m.status NOT IN ('finished', 'interrupted')
+                AND pm.game_type = pmp.game_type
+                AND pm.game_type = ?
+              LIMIT 1
+            `,
+            [userId, gameType],
+            (err, row) => err ? rej(err) : res(row)
+          )
+        );
+      }
       if (doneRow) {
         await new Promise((res, rej) =>
           db.run('COMMIT', err => err ? rej(err) : res())
@@ -172,9 +187,11 @@ const matchmaking = async (request, reply) => {
                 ON pmp.pending_id = pm.id
             WHERE pmp.user_id = ?
               AND pm.status   = 'open'
+              AND pm.game_type = pmp.game_type
+              AND pm.game_type = ?
             LIMIT 1
           `,
-          [userId],
+          [userId, gameType],
           (err, row) => err ? rej(err) : res(row)
         )
       );
@@ -188,15 +205,15 @@ const matchmaking = async (request, reply) => {
       // If no lobby create one & auto-join user
       const pendingId = await new Promise((res, rej) =>
         db.run(
-          'INSERT INTO pending_matches (creator_id) VALUES (?)',
-          [userId],
+          'INSERT INTO pending_matches (creator_id, game_type) VALUES (?, ?)',
+          [userId, gameType],
           function(err) { err ? rej(err) : res(this.lastID) }
         )
       );
       await new Promise((res, rej) =>
         db.run(
-          'INSERT INTO pending_match_players (pending_id, user_id) VALUES (?, ?)',
-          [pendingId, userId],
+          'INSERT INTO pending_match_players (pending_id, user_id, game_type) VALUES (?, ?, ?)',
+          [pendingId, userId, gameType],
           err => err ? rej(err) : res()
         )
       );

@@ -191,7 +191,7 @@ const LocalGame = () => {
 	const [pendingId, setPendingId] = useState<number | null>(null);
 
 
-	const joinGame = useCallback(async (playerId: number) => {
+	const joinGame = useCallback(async (playerId: number, playerIndex: number) => {
 		try {
 			const res  = await fetch(`/api/matchmaking`, {
 				method:  'POST',
@@ -202,6 +202,7 @@ const LocalGame = () => {
 				body: JSON.stringify({
 					player_id: playerId,
 					game_type: 'local',
+					player_index: playerIndex
 				}),
 			})
 			if (!res.ok) {
@@ -225,7 +226,7 @@ const LocalGame = () => {
 		return
 	setAddedPlayers([user.username])
 	// setCreatorId(user.id)
-	joinGame(user.id)
+	joinGame(user.id, 1)
   }, [user, joinGame])
 
   useEffect(() => {
@@ -316,7 +317,7 @@ const LocalGame = () => {
 			try {
 				const res = await customFetch.get(`/user/${lastAdded}`)
 				const nextUserId = res.data.id
-				await joinGame(nextUserId)
+				await joinGame(nextUserId, 2)
 			} catch (err) {
 			// TODO
 			}
