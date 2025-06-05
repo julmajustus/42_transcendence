@@ -280,8 +280,12 @@ const LocalTournament = () => {
         setBracket(withRoundOne) */
       }
       return body
-    } catch (err) {
-      // TODO
+    } catch (err: any) {
+      console.error('Error in joinTournament:', err);
+
+      const message =
+        err.message || 'Failed to join tournament (network or server error).';
+      toast.error(message);
     }
   }, [user!.authToken])
 
@@ -294,7 +298,7 @@ const LocalTournament = () => {
   if (!user)
     return
     setAddedPlayers([user.username])
-    joinTournament(user.id, 1, -1)
+    joinTournament(Number(user.id), 1, -1)
   }, [user, joinTournament])
 
   useEffect(() => {
@@ -358,7 +362,7 @@ const LocalTournament = () => {
 
   let i:number = 2
   useEffect(() => {
-    if (!lastAdded)
+    if (!lastAdded || !tourneyId)
       return
     const fetchAndJoin = async () => {
       try {
@@ -366,8 +370,15 @@ const LocalTournament = () => {
         const nextUserId = res.data.id
         await joinTournament(nextUserId, i, tourneyId)
         i++
-      } catch (err) {
-        // TODO
+      } catch (err: any) {
+        console.error('Error in fetchAndJoin (tournament):', err);
+        const message =
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
+          'Failed to add player to tournament.';
+
+        toast.error(message);
       }
     }
     fetchAndJoin()

@@ -183,9 +183,9 @@ const LocalGame = () => {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
   const [lastAdded, setLastAdded] = useState<string | null>(null)
-  const [creatorId, setCreatorId] = useState<string | null>(null)
+//   const [creatorId, setCreatorId] = useState<string | null>(null)
   const { user } = useAuth();
-  const [readyToRender, setReadyToRender] = useState(false)
+//   const [readyToRender, setReadyToRender] = useState(false)
   const navigate = useNavigate();
   const [gameId, setGameId] = useState<number | null>(null);
 	const [pendingId, setPendingId] = useState<number | null>(null);
@@ -227,7 +227,7 @@ const LocalGame = () => {
 		return
 	setAddedPlayers([user.username])
 	// setCreatorId(user.id)
-	joinGame(user.id, 1, -1)
+	joinGame(Number(user.id), 1, -1)
   }, [user, joinGame])
 
   useEffect(() => {
@@ -312,15 +312,20 @@ const LocalGame = () => {
 	}, [addedPlayers, creatorId, lastAdded]); */
 
 	useEffect(() => {
-		if (!lastAdded)
+		if (!lastAdded || !pendingId)
 			return
 		const fetchAndJoin = async () => {
 			try {
 				const res = await customFetch.get(`/user/${lastAdded}`)
 				const nextUserId = res.data.id
 				await joinGame(nextUserId, 2, pendingId)
-			} catch (err) {
-			// TODO
+			} catch (err: any) {
+				console.error('Failed to fetch user or join game:', err);
+				const msg =
+					err.response?.data?.error ||
+					err.message ||
+					'Failed to fetch user';
+				toast.error(msg);
 			}
 		}
 		fetchAndJoin()
@@ -332,7 +337,7 @@ const LocalGame = () => {
 	const rendererRef = useRef<GameRendererType | null>(null);
 
 	useEffect(() => {
-		if (!gameId || !user?.authToken) return;
+		if (!gameId || !user?.authToken || !canvasRef.current) return;
 
 		canvasRef.current.focus();
 
