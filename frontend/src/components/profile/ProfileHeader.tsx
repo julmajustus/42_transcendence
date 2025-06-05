@@ -16,6 +16,7 @@ import {
 } from '../../pages/UserProfileStyles';
 import { customFetch } from '../../utils';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 interface ProfileHeaderProps {
   userProfile: any;
@@ -56,6 +57,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (!files || files.length === 0 || !currentUser) return;
 
     const file = files[0];
+    if (file.size > 1 * 1024 * 1024) {
+      toast.error('File is too large. Maximum size is 1 MB.');
+      return;
+    }
     const formData = new FormData();
     formData.append('avatar', file);
 

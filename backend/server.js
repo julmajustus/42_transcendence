@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const fastify = require('fastify')({
 	logger: true,
+	bodyLimit: 5 * 1024 * 1024 * 1024,
 })
 
 require('./cron');
@@ -58,7 +59,11 @@ fastify.register(require('@fastify/static'), {
 	// constraints: { host: 'example.com' } // optional: default {}
 })
 
-fastify.register(require('@fastify/multipart'))
+fastify.register(require('@fastify/multipart'), {
+	limits: {
+		fileSize: 5 * 1024 * 1024 * 1024
+	}
+})
 fastify.register(require('@fastify/websocket'))
 
 fastify.register(require('./routes/auth'), { prefix: '/api' })
