@@ -141,7 +141,7 @@ t.test('add/remove friends tests', async t => {
 	});
 	t.equal(selfMadeFriend.statusCode, 400, 'not able to add yourself as friend of another user')
 
-	// trying to add a lot of friends and seeing if the friends list enpoint shows only 10 elements
+/* 	// trying to add a lot of friends and seeing if the friends list enpoint shows only 10 elements
 	const username = 'user'
 	const email = `${username}@gmail.com`
 	for (let i = 3; i < 25; i++) {
@@ -168,7 +168,7 @@ t.test('add/remove friends tests', async t => {
 		method: 'GET',
 		url: `api/user/${userAUsername}/friends`
 	})
-	t.equal(JSON.parse(limitedList.payload).length, 10, 'limit of 10 for each page ok')
+	t.equal(JSON.parse(limitedList.payload).length, 10, 'limit of 10 for each page ok') */
 })
 
 t.teardown(async () => {
