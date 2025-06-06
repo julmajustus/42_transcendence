@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/19 09:51:58 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/03 13:33:46 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,8 @@ const GameState = {
 	NOT_STARTED: "not_started",
 	ACTIVE: "active",
 	RESETTING: "resetting",
-	FINSIHED: "finished"
+	FINSIHED: "finished",
+	PAUSED: "paused"
 }
 
 const Input = {
@@ -231,45 +232,17 @@ class Game {
 		}
 	}
 
-/* 	updatePaddle(change, paddle) {
-
-		const sides = paddle.getSides();
-
-		console.log('change: ', change)
-		console.log('sides.yTop: ', sides.yTop)
-		console.log('sides.yBot : ', sides.yBot)
-		console.log('BOARD_HEIGHT: ', BOARD_HEIGHT)
-		console.log('sides.yTop - change: ', sides.yTop - change)
-		console.log('\n')
-
-		if (change < 0) {
-			if (sides.yTop - change >= 0) {
-				paddle.y_offset += change;
-			}
-		}
-		if (change > 0) {
-			if (sides.yBot + change <= BOARD_HEIGHT)
-				paddle.y_offset += change;
-		}
-	} */
-
 	updatePaddle(deltaY, paddle) {
 		const centerY0 = paddle.initial_pos[1];
-		// console.log('centerY0: ', centerY0)
 		const halfH = PADDLE_HEIGHT / 2;
-		// console.log('halfH: ', halfH)
 		const minOff = halfH - centerY0;
-		// console.log('minOff: ', minOff)
 		const maxOff = (BOARD_HEIGHT - halfH) - centerY0;
-		// console.log('maxOff: ', maxOff)
 
 		let next = paddle.y_offset + deltaY;
-		// console.log('next: ', next)
 		if (next < minOff)
 			next = minOff;
 		if (next > maxOff)
 			next = maxOff;
-		// console.log('\n')
 		paddle.y_offset = next;
 	}
 
@@ -283,9 +256,12 @@ class Game {
 		// Hit right paddle
 		if (ball.vx > 0) {
 			let dx = rp_sides.xLeft - ball.x;
-			if (dx > 0 && dx <= BALL_RADIUS && (ball.y > rp_sides.yTop && ball.y < rp_sides.yBot)) {
+			if (dx > 0 && dx <= BALL_RADIUS && ((ball.y + BALL_RADIUS) > rp_sides.yTop && (ball.y - BALL_RADIUS) < rp_sides.yBot)) {
 				const dy = ball.y - this.objects.right_paddle.yCenter;
-				const angle = -dy / (PADDLE_HEIGHT / 2) * max_bounce_angle;
+				let fraction = -dy / (PADDLE_HEIGHT / 2)
+				if (fraction > 1) fraction = 1;
+				if (fraction < -1) fraction = -1;
+				const angle = fraction * max_bounce_angle;
 				ball.vx = Math.cos(angle + PI) * this.objects.ball.speed;
 				ball.vy = Math.sin(angle + PI) * this.objects.ball.speed;
 				this.objects.ball.speed = this.objects.ball.speed * 1.1
@@ -295,9 +271,12 @@ class Game {
 		// Hit left paddle
 		if (ball.vx < 0) {
 			let dx = ball.x - lp_sides.xRight;
-			if (dx > 0 && dx <= BALL_RADIUS && (ball.y > lp_sides.yTop && ball.y < lp_sides.yBot)) {
+			if (dx > 0 && dx <= BALL_RADIUS && ((ball.y + BALL_RADIUS) > lp_sides.yTop && (ball.y - BALL_RADIUS) < lp_sides.yBot)) {
 				const dy = ball.y - this.objects.left_paddle.yCenter;
-				const angle = dy / (PADDLE_HEIGHT / 2) * max_bounce_angle;
+				let fraction = dy / (PADDLE_HEIGHT / 2)
+				if (fraction > 1) fraction = 1;
+				if (fraction < -1) fraction = -1;
+				const angle = fraction * max_bounce_angle;
 				ball.vx = Math.cos(angle) * this.objects.ball.speed;
 				ball.vy = Math.sin(angle) * this.objects.ball.speed;
 				this.objects.ball.speed = this.objects.ball.speed * 1.1
@@ -339,7 +318,29 @@ class Game {
 		return (false);
 	}
 
+	pause() {
+		if (this.gameState === GameState.ACTIVE) {
+			this.gameState = GameState.PAUSED
+			this.pauseTimestamp = Date.now()
+		}
+	}
+
+	resume() {
+		if (this.gameState === GameState.PAUSED) {
+			this.gameState = GameState.ACTIVE
+			this.pauseTimestamp = null
+		}
+	}
+
 	refreshGame() {
+/* 		if (this.pauseTimestamp && Date.now() - this.pauseTimestamp > 30_000) {
+			this.resume();
+			this.pauseTimestamp = null;
+		} */
+		if (this.gameState === GameState.PAUSED) {
+			this.remainingTimout = 30000 - (Date.now() - this.pauseTimestamp)
+			return
+		}
 		const roundsToWin = Math.ceil(this.total_rounds / 2)
 		this.processInputs();
 		if (this.gameState === GameState.NOT_STARTED)

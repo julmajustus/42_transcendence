@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
 	started_at DATETIME,
 	finished_at DATETIME,
 	winner_id INTEGER,
+	game_type TEXT,
 	FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (winner_id) REFERENCES users(id)
 );
@@ -73,6 +74,7 @@ CREATE TABLE IF NOT EXISTS pending_matches (
 	status       TEXT    NOT NULL DEFAULT 'open',
 	created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	match_id     INTEGER,
+	game_type         TEXT,
 	FOREIGN KEY (creator_id) REFERENCES users(id),
 	FOREIGN KEY (match_id)   REFERENCES matches(id)
 );
@@ -82,6 +84,7 @@ CREATE TABLE IF NOT EXISTS pending_match_players (
 	pending_id INTEGER NOT NULL,
 	user_id    INTEGER NOT NULL,
 	joined_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	game_type       TEXT,
 	UNIQUE(pending_id, user_id),
 	FOREIGN KEY (pending_id) REFERENCES pending_matches(id) ON DELETE CASCADE,
 	FOREIGN KEY (user_id)    REFERENCES users(id)            ON DELETE CASCADE

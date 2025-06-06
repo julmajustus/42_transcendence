@@ -1,14 +1,14 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   swagger.test.js                                    :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: jmakkone <jmakkone@student.hive.fi>        +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2025/04/02 16:28:39 by jmakkone          #+#    #+#             //
-//   Updated: 2025/04/09 17:26:24 by jmakkone         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   swagger.test.js                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/02 16:28:39 by jmakkone          #+#    #+#             */
+/*   Updated: 2025/06/02 14:36:31 by mpellegr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 const t = require('tap');
 const fastify = require('../server');
@@ -19,7 +19,7 @@ const fastify = require('../server');
 t.test('GET /documentation returns Swagger docs', async t => {
 	const response = await fastify.inject({
 		method: 'GET',
-		url: '/documentation'
+		url: '/api/documentation'
 	});
 
 	t.equal(response.statusCode, 200, 'Documentation endpoint should return status 200');
@@ -33,7 +33,7 @@ t.test('GET /documentation returns Swagger docs', async t => {
 t.test('GET /documentation/json calls transformSpecification', async t => {
 	const response = await fastify.inject({
 		method: 'GET',
-		url: '/documentation/json'
+		url: '/api/documentation/json'
 	});
 	t.equal(response.statusCode, 200, 'Should return 200 for the JSON spec');
 });

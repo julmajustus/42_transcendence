@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 10:03:53 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/26 15:54:34 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/06/02 14:26:48 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,73 +16,111 @@ const jwt = require("jsonwebtoken");
 
 const game_server = new GameServer();
 
+const HEARTBEAT_INTERVAL = 5_000
+
 // Don't run the server async processes or they break the tests
 if (process.env.NODE_ENV !== 'test') {
 	game_server.setupIntervals();
 }
 
 const runServer = (ws, req) => {
+	ws.isAlive = true
+
+	ws.on('pong', () => {
+		ws.isAlive = true
+	})
+
+	ws.on('close', (code, reason) => {
+		const gamesMap = ws.game_type === GameType.MULTI_PLAYER ? game_server.multiplayerGames : game_server.singleplayerGames
+		const game = gamesMap.get(Number(ws.game_id))
+		if (!game) return
+
+		const player = game.getPlayer(ws.user_id)
+		if (player) player.joined = false
+
+		game.pause()
+
+		const msg = JSON.stringify({ type: MessageType.STATE, payload: game.state });
+		game_server.sockets.forEach(s => {
+			if (s.game_id == ws.game_id && s.readyState === WebSocket.OPEN) {
+				s.send(msg);
+			}
+		});
+
+		game_server.sockets.delete(ws)
+	})
 	ws.on('message', (msg) => {
 		try {
 			const {type, payload} = JSON.parse(msg);
 			if (type === MessageType.JOIN_MULTI) {
-				console.log(payload);
-				const user = jwt.verify(payload.token, "supersecret"); // TODO: Replace with env variable
+				const user = jwt.verify(payload.token, process.env.JWT_SECRET);
+				const game = game_server.multiplayerGames.get(Number(payload.game_id));
+				if (!game) throw new Error(ErrorType.GAME_DOES_NOT_EXIST, "Game not found");
 				game_server.joinGame(Number(user.id), Number(payload.game_id));
 				ws.game_id = payload.game_id;
 				ws.user_id = user.id;
 				ws.game_type = GameType.MULTI_PLAYER;
 				game_server.sockets.add(ws);
-				ws.send(JSON.stringify({type: MessageType.SETTINGS, payload: game_server.multiplayerGames.get(Number(payload.game_id)).getSettings()}));
-				//console.log(`Player with id ${Number(payload.player_id)} joined game ${payload.game_id}`);
+
+				const me = game.getPlayer(user.id);
+				if (me) me.joined = true;
+
+				if (game.players.every(p => p.joined) && game.resume) {
+					game.resume();
+				}
+
+				ws.send(JSON.stringify({
+					type: MessageType.SETTINGS,
+					payload: game.getSettings()
+				}));
 			}
 			else if (type === MessageType.JOIN_SINGLE) {
-				const user = jwt.verify(payload.token, "supersecret"); // TODO: Replace with env variable
-				// const game = game_server.singleplayerGames.get(Number(user.id));
+				const user = jwt.verify(payload.token, process.env.JWT_SECRET);
 				const game = game_server.singleplayerGames.get(Number(payload.game_id));
+				if (!game) throw new Error(ErrorType.GAME_DOES_NOT_EXIST, "Game not found");
 				game.players[0].joined = true;
 				game.players[1].joined = true;
 				ws.game_id = payload.game_id;
 				ws.user_id = user.id;
 				ws.game_type = GameType.SINGLE_PLAYER;
 				game_server.sockets.add(ws);
-				ws.send(JSON.stringify({type: MessageType.SETTINGS, payload: game.getSettings()})); // MARCO i think this can stay the same
+
+				if (game.resume) game.resume();
+
+				ws.send(JSON.stringify({
+					type: MessageType.SETTINGS,
+					payload: game.getSettings()
+				}));
 			}
 
 			else if (type === MessageType.CONTROL_INPUT) {
+				let game;
 				if (ws.game_type === GameType.MULTI_PLAYER)
 				{
-					if (!game_server.multiplayerGames.has(Number(ws.game_id))) {
-						throw new Error(ErrorType.GAME_DOES_NOT_EXIST, "The game does not exist");
+					game = game_server.multiplayerGames.get(Number(ws.game_id));
+					if (!game) throw new Error(ErrorType.GAME_DOES_NOT_EXIST, "Game not found");
+
+					// only accept input if that player is “joined”
+					if (game.getPlayer(ws.user_id).joined) {
+						game.acceptPlayerInput(ws.user_id, payload.input);
 					}
-					const game = game_server.multiplayerGames.get(Number(ws.game_id));
-					if (!game.getPlayer(ws.user_id).joined) {
-						console.warn(`Player with id ${ws.user_id} has not joined the game yet`)
-					}
-					game.acceptPlayerInput(ws.user_id, payload.input);
 				}
 				else if (ws.game_type === GameType.SINGLE_PLAYER) {
-					// if (!game_server.singleplayerGames.get(Number(ws.user_id))) {
-					if (!game_server.singleplayerGames.get(Number(ws.game_id))) {
-						throw new Error(ErrorType.GAME_DOES_NOT_EXIST, "The game does not exist");
-					}
-					// const game = game_server.singleplayerGames.get(Number(ws.user_id));
-					const game = game_server.singleplayerGames.get(Number(ws.game_id));
+					game = game_server.singleplayerGames.get(Number(ws.game_id));
+					if (!game) throw new Error(ErrorType.GAME_DOES_NOT_EXIST, "Game not found");
 					const player1_id = game.players[0].id;
 					const player2_id = game.players[1].id;
-					// game.acceptPlayerInput(SinglePlayerIds.PLAYER_1, payload.input_player1);
-					// game.acceptPlayerInput(SinglePlayerIds.PLAYER_2, payload.input_player2);
 					game.acceptPlayerInput(player1_id, payload.input_player1);
 					game.acceptPlayerInput(player2_id, payload.input_player2);
 				}
 			}
 		}
 		catch (e) {
-			if (typeof e == Error) {
+			if (e instanceof Error && e.error_type !== undefined) {
 				ws.close(1008, e.msg);
 			}
 			else {
-				ws.close(1008, "Invalid auth");
+				ws.close(1008, "Invalid auth or message");
 			}
 		}
 	});
@@ -216,5 +254,19 @@ const getGame = (request, reply) => {
 		return reply.status(200).send(row);
 	})
 };
+
+if (process.env.NODE_ENV !== 'test') {
+	const interval = setInterval(() => {
+		for (let ws of game_server.sockets) {
+			if (ws.isAlive === false) {
+				console.log(`Terminating dead connection for user ${ws.user_id}`)
+				ws.terminate()
+				continue
+			}
+			ws.isAlive = false
+			ws.ping()
+		}
+	}, HEARTBEAT_INTERVAL)
+}
 
 module.exports = { runServer, createNewMultiplayerGame, createNewSinglePlayerGame, listGames, getGame, game_server }

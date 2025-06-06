@@ -269,31 +269,35 @@ const UserSettings = () => {
 
 	useEffect(() => {
 		(async () => {
-		try {
-			const resp = await fetch(`/api/user/me`, {
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${user.authToken}`,
-				},
-			});
-			if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-			const data = await resp.json();
-			// console.log(data)
-			setTwoFAEnabled(Number(data.two_fa) === 1);
-			if (data.google_id)
-				setGmailAuth(true)
-		} catch (err) {
-			console.error('Failed to fetch 2FA status', err);
-			toast.error('Could not load 2FA status');
-		}
+			if (!user)
+				return
+			try {
+				const resp = await fetch(`/api/user/me`, {
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${user.authToken}`,
+					},
+				});
+				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+				const data = await resp.json();
+				setTwoFAEnabled(Number(data.two_fa) === 1);
+				if (data.google_id)
+					setGmailAuth(true)
+			} catch (err) {
+				console.error('Failed to fetch 2FA status', err);
+				toast.error('Could not load 2FA status');
+			}
 		})();
-	}, [user.authToken]);
-	// console.log('twoFAEnabled: ', twoFAEnabled)
+	}, [user]);
 	
 	const handleToggle2FA = () => {
 		if (gmailAuth === true) {
-			toast.error('2FA is not available ig logged in with google')
-			return
+			toast.info(
+				<div>
+				You are currently logged in with a Google account.<br />
+				You can change settings for 2FA but they will affect only classic login.
+				</div>
+			)
 		}
 		setTwoFAEnabled(prev => !prev)
 		setTimeout(() => {
@@ -309,19 +313,31 @@ const UserSettings = () => {
 		setChangingPassword(true)
 	}
 	
+	let i:number = 0
 	const handleChangeEmail = () => {
 		if (gmailAuth === true) {
-			toast.error('Change email is not possible if logged in with google')
-			return
+			i++
+			if (i === 1) {
+				toast.info(
+					<div>
+					You are currently logged in with a Google account.<br />
+					Changing email means you won't be able to log in with Google.<br />
+					If you're fine with it, click on change email again.
+					</div>
+				)
+				return
+			}
 		}
 		setChangingEmail(true)
 	}
 
-	const handleSubmit = async (e) => {
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		if (!user)
+			return
 
 		const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-		const userRe = /^[A-Za-z0-9_]{3,20}$/
+		const userRe = /^(?!\d+$)[A-Za-z0-9_]{3,20}$/
 		const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
 		if (newPassword && newPassword !== confirmPassword) {
@@ -334,7 +350,7 @@ const UserSettings = () => {
 		}
 		if (newUsername) {
 			if (!userRe.test(newUsername)) {
-				toast.error('Username must be 3–20 characters and contain only letters, numbers, or underscore');
+				toast.error('Username must be 3–20 characters and contain only letters, numbers, or underscore and cannot be only numbers');
 				return;
 			}
 		}

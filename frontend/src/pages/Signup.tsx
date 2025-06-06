@@ -91,7 +91,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const confirmPassword = (formData.get('confirmPassword') || '').toString();
 
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const userRe = /^[A-Za-z0-9_]{3,20}$/
+  const userRe = /^(?!\d+$)[A-Za-z0-9_]{3,20}$/
   const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
   const errors: string[] = []
@@ -99,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!emailRe.test(email))
     errors.push('Please enter a valid email address')
   if (!userRe.test(username))
-    errors.push('Username must be 3–20 characters and contain only letters, numbers, or underscore')
+    errors.push('Username must be 3–20 characters and contain only letters, numbers, or underscore and cannot be only numbers')
   if (!passRe.test(password))
     errors.push('Password must be ≥8 chars, include at least one uppercase letter, one lowercase letter and one digit')
   if (password !== confirmPassword) {

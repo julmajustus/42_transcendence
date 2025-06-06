@@ -29,7 +29,8 @@ const User = {
 		email: { type: 'string' },
 		avatar: { type: 'string'},
 		online_status: {type : 'string' },
-		two_fa: { type: 'integer' }
+		two_fa: { type: 'integer' },
+		google_id: { type: 'integer' }
 	}
 }
 
@@ -81,7 +82,7 @@ const registerUserSchema = {
 					type: 'string',
 					minLength: 3,
 					maxLength: 20,
-					pattern: '^[A-Za-z0-9_]+$'
+					pattern: '^(?!\\d+$)[A-Za-z0-9_]+$'
 				},
 				password: {
 					type: 'string',
@@ -113,7 +114,7 @@ const loginUserSchema = {
 					type: 'string',
 					minLength: 3,
 					maxLength: 20,
-					pattern: '^[A-Za-z0-9_]+$'
+					pattern: '^(?!\\d+$)[A-Za-z0-9_]+$'
 				},
 				password: {
 					type: 'string',
@@ -162,13 +163,13 @@ const getUserAvatarSchema = {
 
 const getUserFriendsSchema = {
 	schema: {
-		querystring: {
+/* 		querystring: {
 			type: 'object',
 			properties: {
 				page: { type: 'integer', default: 1 },
 				limit: { type: 'integer', default: 10 }
 			}
-		},
+		}, */
 		response: {
 			200: {
 				type: 'array',
@@ -250,7 +251,7 @@ function usersRoutes(fastify, options, done) {
 						type: 'string',
 						minLength: 3,
 						maxLength: 20,
-						pattern: '^[A-Za-z0-9_]+$'
+						pattern: '^(?!\\d+$)[A-Za-z0-9_]+$'
 					},
 					twoFA: {
 						type: 'integer',

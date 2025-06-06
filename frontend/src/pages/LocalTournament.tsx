@@ -212,7 +212,7 @@ const ChampionScreen = styled(Container)`
   text-align:      center;
 `
 
-interface Player {
+interface User {
   id:       number
   username: string
 }
@@ -229,29 +229,25 @@ interface BrRow {
 }
 
 const LocalTournament = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [query, setQuery] = useState('');
-  const [filtered, setFiltered] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [addedPlayers, setAddedPlayers] = useState([]);
+  const [filtered, setFiltered] = useState<User[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
-  const [lastAdded, setLastAdded] = useState(null);
-  // const [creatorId, setCreatorId] = useState(null)
+  const [lastAdded, setLastAdded] = useState<string | null>(null)
   const { user } = useAuth();
-  const [readyToRender, setReadyToRender] = useState(false)
   const navigate = useNavigate();
   const [gameId, setGameId] = useState<number | null>(null);
   const [tourneyId,    setTourneyId]    = useState<number | null>(null)
-  const [players,      setPlayers]      = useState<Player[]>([])
-  const [started,      setStarted]      = useState(false)
   const [bracket,      setBracket]      = useState<BrRow[]>([])
-  const [loading,      setLoading]      = useState(true)
   const [championName, setChampionName] = useState<string | null>(null)
   const [winnerName,   setWinnerName]   = useState<string | null>(null)
-  // const [myUserId,     setMyUserId]     = useState<number | null>(null)
+  const [started, setStarted] = useState(false)
+  const [interrupted, setInterrupted] = useState(false)
 
-  const joinTournament = useCallback(async (playerId: number) => {
+  const joinTournament = useCallback(async (playerId: number, playerIndex: number, t_id: number) => {
     try {
       const res  = await fetch(`/api/tournament/auto`, {
         method:  'POST',
@@ -262,45 +258,48 @@ const LocalTournament = () => {
         body: JSON.stringify({
           player_id: playerId,
           game_type: 'local',
+          player_index: playerIndex,
+          tournament_id: t_id
         }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || res.statusText)
+      }
       const body = await res.json()
-      // const res = await customFetch.post('/tournament/auto', { // for some reason customFetch not working
-      //   player_id: playerId,
-      //   game_type: 'local',
-      // })
-      // const body = res.data
-      console.log(body)
-      if (!res.ok) throw new Error(body.error || 'Unknown error')
 
       setTourneyId(body.tournament_id)
-      setPlayers(body.players)
       setStarted(body.started)
-      // setMyUserId(body.user_id)
 
       if (body.bracket) {
-        const withRoundOne: BrRow[] = body.bracket.map((m: any) => ({
+        setBracket(body.bracket)
+/*         const withRoundOne: BrRow[] = body.bracket.map((m: any) => ({
           ...m,
           round: 1,
         }))
-        setBracket(withRoundOne)
+        setBracket(withRoundOne) */
       }
-      setLoading(false)
       return body
-    } catch (err) {
-      // TODO
+    } catch (err: any) {
+      console.error('Error in joinTournament:', err);
+
+      const message =
+        err.message || 'Failed to join tournament (network or server error).';
+      toast.error(message);
     }
-  })
+  }, [user!.authToken])
+
+  useEffect(() => {
+    if (!tourneyId) return
+    fetchFullBracket()
+  }, [tourneyId])
 
   useEffect(() => {
   if (!user)
     return
-  // console.log('logged in user:', user.username)
     setAddedPlayers([user.username])
-  // console.log('logged in user id:', user.id)
-    // setCreatorId(user.id)
-    joinTournament(user.id)
-  }, [user])
+    joinTournament(Number(user.id), 1, -1)
+  }, [user, joinTournament])
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -320,7 +319,7 @@ const LocalTournament = () => {
     setFiltered(users.filter(u => u.username.toLowerCase().includes(query.toLowerCase())));
   }, [query, users]);
 
-  const handleSelect = (username) => {
+  const handleSelect = (username: string) => {
   setSelected(username);
   setQuery(username);
   setFiltered([]);
@@ -334,12 +333,13 @@ const LocalTournament = () => {
   };
 
   const handlePasswordSubmit = async () => {
+    if (!selected)
+      return
     try{
       const response = await customFetch.post('/check_password', {
       selected,
       password,
       })
-      // console.log('password check response:', response);
       if (response.data.ok) {
         setLastAdded(selected);
         setShowPasswordPrompt(false);
@@ -360,17 +360,25 @@ const LocalTournament = () => {
       }
     };
 
+  let i:number = 2
   useEffect(() => {
-    if (!lastAdded)
+    if (!lastAdded || !tourneyId)
       return
-    // console.log("lastAdded player: ", lastAdded)
     const fetchAndJoin = async () => {
       try {
         const res = await customFetch.get(`/user/${lastAdded}`)
         const nextUserId = res.data.id
-        await joinTournament(nextUserId)
-      } catch (err) {
-        // TODO
+        await joinTournament(nextUserId, i, tourneyId)
+        i++
+      } catch (err: any) {
+        console.error('Error in fetchAndJoin (tournament):', err);
+        const message =
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
+          'Failed to add player to tournament.';
+
+        toast.error(message);
       }
     }
     fetchAndJoin()
@@ -388,6 +396,10 @@ const LocalTournament = () => {
 
       const { tournament, matches } = await resp.json()
       setBracket(matches as BrRow[])
+      if (tournament.status === 'interrupted') {
+        setInterrupted(true)
+        return
+      }
 
       if (tournament.status === 'completed' && !championName) {
         const info = await (
@@ -406,8 +418,7 @@ const LocalTournament = () => {
 	const rendererRef = useRef<GameRendererType | null>(null);
 
 	useEffect(() => {
-		if (addedPlayers.length !== 4 ||
-        !canvasRef.current ||
+		if (!canvasRef.current ||
         !user?.authToken ||
         !gameId)
 			return;
@@ -437,19 +448,12 @@ const LocalTournament = () => {
 		};
 
 		// Create the renderer using the adapter
-		// console.log('creator id used for createGameRendererAdapter:', creatorId)
 		const renderer = createGameRendererAdapter(
-			// creatorId,
 			gameId,
 			user.authToken,
 			canvasRef.current,
 			"single"
 		);
-
-/* 		renderer.onGameOver = (winner) => {
-			// console.log("Game over, winner:", winner);
-			setTimeout(() => navigate("/dashboard"), 3_000);
-		}; */
 
 		// Add event listeners
 		document.addEventListener('keydown', keyDownHandler);
@@ -545,9 +549,18 @@ const LocalTournament = () => {
     )
   }
 
+  if (interrupted) {
+    return (
+      <TournamentContainer>
+        <h2>User disconected for more than 30 seconds</h2>
+        <h2>Please refresh the page to start a new tournament</h2>
+      </TournamentContainer>
+    )
+  }
+
   const rounds = Math.max(1, ...bracket.map(b => b.round))
 
-  if (addedPlayers.length < 4) {
+  if (!started) {
     return (
       <Container>
         <SearchWrapper>
@@ -609,7 +622,7 @@ const LocalTournament = () => {
   }
 
 
-  if (addedPlayers.length === 4) {
+  // if (addedPlayers.length === 4) {
     return (
       <TournamentContainer>
     <h1>Tournament {/* #{tourneyId} */} Bracket</h1>
@@ -646,7 +659,7 @@ const LocalTournament = () => {
       </BracketGrid>
       </TournamentContainer>
     )
-  }
+  // }
 }
   
 export default LocalTournament;

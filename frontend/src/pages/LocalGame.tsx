@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useEffect, useState, useRef,  } from "react";
+import { useEffect, useState, useRef, useCallback  } from "react";
 import { customFetch } from '../utils';
 
 import { useAuth } from '../context/AuthContext';
@@ -169,30 +169,66 @@ const GameCanvas = styled.canvas`
   margin-top: 1rem;
 `;
 
+interface User {
+  id:       number
+  username: string
+}
 
 const LocalGame = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [query, setQuery] = useState('');
-  const [filtered, setFiltered] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [addedPlayers, setAddedPlayers] = useState([]);
+  const [filtered, setFiltered] = useState<User[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
-  const [lastAdded, setLastAdded] = useState(null);
-  const [creatorId, setCreatorId] = useState(null)
+  const [lastAdded, setLastAdded] = useState<string | null>(null)
+//   const [creatorId, setCreatorId] = useState<string | null>(null)
   const { user } = useAuth();
-  const [readyToRender, setReadyToRender] = useState(false)
+//   const [readyToRender, setReadyToRender] = useState(false)
   const navigate = useNavigate();
   const [gameId, setGameId] = useState<number | null>(null);
+	const [pendingId, setPendingId] = useState<number | null>(null);
+
+
+	const joinGame = useCallback(async (playerId: number, playerIndex: number, pending: number) => {
+		try {
+			const res  = await fetch(`/api/matchmaking`, {
+				method:  'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${user!.authToken}`
+				},
+				body: JSON.stringify({
+					player_id: playerId,
+					game_type: 'local',
+					player_index: playerIndex,
+					pending_id: pending
+				}),
+			})
+			if (!res.ok) {
+				const err = await res.json().catch(() => ({}))
+				throw new Error(err.error || res.statusText)
+			}
+			const body = await res.json()
+
+			if (body.match_id) {
+				setGameId(body.match_id);
+			} else if (body.pending_id) {
+				setPendingId(prev => prev || body.pending_id);
+			}
+		} catch (err) {
+			toast.error('Matchmaking failed');
+		}
+	}, [user?.authToken])
 
   useEffect(() => {
 	if (!user)
 		return
-	// console.log('logged in user:', user.username)
 	setAddedPlayers([user.username])
-	// console.log('logged in user id:', user.id)
-	setCreatorId(user.id)
-  }, [user])
+	// setCreatorId(user.id)
+	joinGame(Number(user.id), 1, -1)
+  }, [user, joinGame])
 
   useEffect(() => {
 	const fetchUsers = async () => {
@@ -211,7 +247,7 @@ const LocalGame = () => {
 	setFiltered(users.filter(u => u.username.toLowerCase().includes(query.toLowerCase())));
   }, [query, users]);
 
-  const handleSelect = (username) => {
+  const handleSelect = (username: string) => {
 	setSelected(username);
 	setQuery(username);
 	setFiltered([]);
@@ -224,15 +260,13 @@ const LocalGame = () => {
   };
 
   const handlePasswordSubmit = async () => {
-	// Check if password is valid (You could have additional validation here)
-	// console.log(selected)
-	// console.log(password)
+    if (!selected)
+      return
 	try{
 		const response = await customFetch.post('/check_password', {
 		selected,
 		password,
 		})
-		console.log('password check response:', response);
 		if (response.data.ok) {
 			setAddedPlayers([...addedPlayers, selected]);
 			setLastAdded(selected);
@@ -253,7 +287,7 @@ const LocalGame = () => {
 	  }
   };
 
-	useEffect(() => {
+/* 	useEffect(() => {
 		if (addedPlayers.length !== 2 || creatorId === null || !lastAdded)
 			return
 		const createLocalMatch = async () => {
@@ -275,7 +309,27 @@ const LocalGame = () => {
 			}
 		};
 		createLocalMatch();
-	}, [addedPlayers, creatorId, lastAdded]);
+	}, [addedPlayers, creatorId, lastAdded]); */
+
+	useEffect(() => {
+		if (!lastAdded || !pendingId)
+			return
+		const fetchAndJoin = async () => {
+			try {
+				const res = await customFetch.get(`/user/${lastAdded}`)
+				const nextUserId = res.data.id
+				await joinGame(nextUserId, 2, pendingId)
+			} catch (err: any) {
+				console.error('Failed to fetch user or join game:', err);
+				const msg =
+					err.response?.data?.error ||
+					err.message ||
+					'Failed to fetch user';
+				toast.error(msg);
+			}
+		}
+		fetchAndJoin()
+	}, [lastAdded])
 
 /* ********************************************************************* */
 
@@ -283,8 +337,7 @@ const LocalGame = () => {
 	const rendererRef = useRef<GameRendererType | null>(null);
 
 	useEffect(() => {
-		if (addedPlayers.length !== 2 || creatorId === null || !canvasRef.current || !user?.authToken || readyToRender === false)
-			return;
+		if (!gameId || !user?.authToken || !canvasRef.current) return;
 
 		canvasRef.current.focus();
 
@@ -311,9 +364,7 @@ const LocalGame = () => {
 		};
 
 		// Create the renderer using the adapter
-		// console.log('creator id used for createGameRendererAdapter:', creatorId)
 		const renderer = createGameRendererAdapter(
-			// creatorId,
 			gameId,
 			user.authToken,
 			canvasRef.current,
@@ -321,7 +372,6 @@ const LocalGame = () => {
 		);
 
 		renderer.onGameOver = (winner) => {
-			// console.log("Game over, winner:", winner);
 			setTimeout(() => navigate("/dashboard"), 3_000);
 		};
 
@@ -345,7 +395,7 @@ const LocalGame = () => {
 			rendererRef.current = null;
 			// setTimeout(() => { navigate('/dashboard'); }, 3_000);
 		};
-	}, [addedPlayers, user?.authToken, creatorId, readyToRender]);
+	}, [gameId, user?.authToken]);
 
   return (
 	<Container>
@@ -355,7 +405,7 @@ const LocalGame = () => {
 	  width={1}
       height={1}
       />
-	{addedPlayers.length < 2 && (
+	{!gameId && (
 		<SearchWrapper>
 			<Input
 			type="text"
@@ -412,7 +462,7 @@ const LocalGame = () => {
 	</PasswordPrompt>
 	)}
 
-	{addedPlayers.length === 2 && (
+	{gameId && (
 		<GameCanvas
 		ref={canvasRef}
 		width={DEFAULT_WIDTH}

@@ -76,7 +76,6 @@ const registerUser = async (request, reply) => {
 		  }
 
 		const hashedPassword = await bcrypt.hash(password, 10);
-		// console.log(hashedPassword);
 		let fileName
 		try {
 			const avatarResponse = await fetch(`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${username}`)
@@ -164,7 +163,12 @@ const loginUser = async (request, reply) => {
 
 			const now = Math.floor(Date.now() / 1000)
 			await new Promise((resolve, reject) => {
-				db.run('UPDATE users SET online_status = ?, last_seen = ? WHERE id = ?', ['online', now, user.id], (err) => {
+				db.run(`UPDATE users
+						SET online_status = ?,
+							last_seen = ?,
+							google_id = ?
+						WHERE id = ?`,
+					['online', now, null, user.id], (err) => {
 					if (err)
 						return reject(err)
 					resolve()
@@ -216,10 +220,6 @@ const logoutUser = async(request, reply) => {
 
 		const decoded = request.jwtDecode(token)
 		const expiresAt = decoded.exp
-		// console.log(`expires at: ${expiresAt}`)
-		// const now = Math.floor(Date.now() / 1000)
-		// console.log(`now = ${now}`)
-		// console.log(`real time = ${(expiresAt - now) / 60 / 60}`)
 
 		await new Promise((resolve, reject) => {
 			db.run('INSERT INTO token_blacklist (token, expiration) VALUES (?, ?)', [token, expiresAt], (err) => {
@@ -358,7 +358,6 @@ const uploadAvatar = async (request, reply) => {
 		if (!allowedMimeTypes.includes(data.mimetype))
 			return reply.status(400).send({ error: 'Invalid file format. Only PNG and JPEG are allowed.' })
 
-		// console.log(fileBuffer.length)
 		if (fileBuffer.length >= 1 * 1024 * 1024)
 			return reply.status(400).send({ error: 'File is too large. Maximum size is 1MB.' })
 
@@ -465,8 +464,8 @@ const addFriend = async (request, reply) => {
 
 const getUserFriends = async (request, reply) => {
 	const username = request.params.username
-	const { page = 1, limit = 10 } = request.query
-	const offset = (page - 1) * limit
+	// const { page = 1, limit = 10 } = request.query
+	// const offset = (page - 1) * limit
 	try {
 		const user = await new Promise((resolve, reject) => {
 			db.get('SELECT id FROM users WHERE username = ?', [username],
@@ -483,7 +482,8 @@ const getUserFriends = async (request, reply) => {
 			return reply.status(404).send({ error: 'User not found' });
 
 		const friendsList = await new Promise((resolve, reject) => {
-			db.all('SELECT id, user_id, friend_id FROM friends WHERE user_id = ? LIMIT ? OFFSET ?', [user.id, limit, offset],
+			// db.all('SELECT id, user_id, friend_id FROM friends WHERE user_id = ? LIMIT ? OFFSET ?', [user.id, limit, offset],
+			db.all('SELECT id, user_id, friend_id FROM friends WHERE user_id = ?', [user.id],
 				(err, rows) => {
 					if (err)
 						return reject(err)
@@ -615,8 +615,6 @@ const getCurrentUser = async (request, reply) => {
 const checkPassword = async(request, reply) => {
 	const username = request.body.selected
 	const inPwd = request.body.password
-	console.log(username)
-	console.log(inPwd)
 	try {
 		const storedPwd = await new Promise((resolve, reject) => {
 			db.get('SELECT password FROM users WHERE username = ?', [username], (err, row) => {

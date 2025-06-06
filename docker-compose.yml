@@ -10,17 +10,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    # ports:
-    #   - "8888:8888"
-    #   - "9000:9000"
     volumes:
       - sqlite-data:/data
       - avatar-uploads:/app/uploads/avatars
       - ./backend:/app:rw
       - /app/node_modules
-    environment:
-      - SQLITE_DB_PATH=/data/database.sqlite
-      - USER=${USER}
     env_file:
       - .env
     depends_on:
@@ -30,15 +24,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    # ports:
-    #   - "5173:5173"
     volumes:
       - ./frontend:/app
       - ./Game:/app/Game
       - /app/node_modules
-    # environment:
-    #   - VITE_API_URL=http://192.168.1.123:8888
-    #   - VITE_WS_URL=ws://192.168.1.123:8888
     env_file:
       - .env
     depends_on:
@@ -50,7 +39,6 @@ services:
       dockerfile: Dockerfile
     container_name: ft_nginx
     ports:
-      # - "8080:8080"
       - "8443:8443"
     depends_on:
       - frontend

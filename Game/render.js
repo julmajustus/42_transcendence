@@ -158,7 +158,6 @@ export class GameRenderer {
 		});
 
 		this.socket.addEventListener('message', (event) => {
-			//console.log('Received:', event.data);
 			const {type, payload} = JSON.parse(event.data);
 			if (type === MessageType.SETTINGS) {
 				this.updateSettings(payload);
@@ -174,6 +173,11 @@ export class GameRenderer {
 
 		this.socket.addEventListener('close', (e) => {
 			console.warn(`WebSocket closed: (${e.code}: ${e.reason})`);
+		});
+
+		window.addEventListener('offline', () => {
+			console.warn('You lost internet connection');
+			this.socket.close(); // Force-close the socket immediately
 		});
 
 		setInterval(this.render.bind(this), 10);
@@ -318,6 +322,13 @@ export class GameRenderer {
 		}
 		else if (this.state.game_state === "finished") {
 			this.drawResult(this.state.winner);
+		}
+		else if (this.state.game_state === "paused") {
+			this.ctx.fillStyle = WHITE;
+			this.ctx.font = "20px 'Press Start 2P'";
+			this.ctx.textAlign = "center"
+			this.ctx.fillText("Other player is disconnected", this.board_width / 2, this.board_height / 2);
+			this.ctx.fillText(`Game resumes in ${this.state.remaining_timeout}...`, this.board_width / 2, this.board_height / 2 + 30);
 		}
 	}
 

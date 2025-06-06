@@ -23,15 +23,23 @@ const Card = styled.div`
   }
 `;
 
-const Avatar = styled.img<{ online: boolean }>`
+interface AvatarProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  $status: 'online' | 'away' | 'offline';
+}
+
+const Avatar = styled.img<AvatarProps>`
   width: 50px;
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid
-    ${({ online }: { online: boolean }) => (online ? '#4caf50' : '#ccc')};
-`;
 
+  border: 2px solid
+    ${({ $status }) =>
+      $status === 'online' ? '#4caf50'   // green
+      : $status === 'away'   ? '#FFA000' // amber
+      : '#ccc'               // grey for offline
+    };
+`;
 const UserInfo = styled.div`
   display: flex;
   flex-direction: column;
@@ -65,11 +73,15 @@ const UserCard: React.FC<UserCardProps> = ({
   avatar,
   online_status,
 }) => {
-  const isOnline = online_status === 'online';
+  // const isOnline = online_status === 'online';
 
   return (
     <Card>
-      <Avatar src={avatar} alt={`${username}'s avatar`} online={isOnline} />
+      <Avatar
+        src={avatar}
+        alt={`${username}'s avatar`}
+        $status={online_status as 'online' | 'away' | 'offline'} // full status value
+      />
       <UserInfo>
         <Username>{username}</Username>
         {/* <Status online={isOnline}>{isOnline ? 'Online' : 'Offline'}</Status> */}

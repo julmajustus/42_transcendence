@@ -127,6 +127,8 @@ function tournamentRoutes(fastify, options, done) {
 				properties: {
 					player_id: { type: 'integer' },
 					game_type: { type: 'string' },
+					player_index: { type: 'integer' },
+					tournament_id: { type: 'integer' }
 				},
 				required: ['player_id', 'game_type'],
 			},
