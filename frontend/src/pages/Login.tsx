@@ -11,10 +11,8 @@ import styled, { keyframes } from 'styled-components';
 import { customFetch } from '../utils';
 import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { PROTOCOL } from '../config';
-import { BACKEND_PORT } from '../config';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -139,8 +137,20 @@ const GoogleButton = styled.button`
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const username = formData.get('username') as string;
-  const password = formData.get('password') as string;
+  const username = (formData.get('username') || '').toString().trim()
+  const password = (formData.get('password') || '').toString();
+
+  const userRe = /^[A-Za-z0-9_]{3,20}$/
+  const errors: string[] = []
+  if (!userRe.test(username))
+    errors.push('Username must be 3–20 characters and contain only letters, numbers, or underscore')
+  if (password.length === 0)
+    errors.push('Password cannot be empty')
+  if (errors.length) {
+    errors.forEach((msg) => toast.error(msg));
+    return null;
+  }
+
   try {
     const response = await customFetch.post('/user/login', {
       username,
@@ -175,13 +185,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 const Login: React.FC = () => {
   const actionData = useActionData();
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const loginProcessed = useRef(false);
+  const [needPassword, setNeedPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   useEffect(() => {
-    console.log(actionData?.initialAuth);
+    // console.log(actionData?.initialAuth);
 
     // Handle 2FA required response
     if (actionData?.initialAuth) {
@@ -231,7 +244,9 @@ const Login: React.FC = () => {
           );
 
           toast.success('Logged in with Google successfully');
-          navigate('/dashboard');
+          handlePasswordSubmit(username)
+          // setNeedPassword(true)
+          // navigate('/dashboard');
         })
         .catch((error) => {
           console.error('Failed to get user data:', error);
@@ -245,6 +260,116 @@ const Login: React.FC = () => {
       navigate('/dashboard');
     }
   }, [actionData, login, navigate, location]);
+
+    const handlePasswordSubmit = async (username) => {
+    // Check if password is valid (You could have additional validation here)
+    // console.log(selected)
+    // console.log(password)
+      try{
+        const response = await customFetch.post('/check_password', {
+          selected: username,
+          password: 'googlePsw12',
+        })
+        console.log('password check response:', response);
+        if (response.data.ok)
+          setNeedPassword(true)
+        else
+          navigate('/dashboard')
+      } catch (err: unknown) {
+        if (err instanceof AxiosError && err.response) {
+          if (err.response.status === 401) {
+            // on 401 Unauthorized, go to dashboard
+            navigate('/dashboard');
+            return;
+          }
+          // you can handle other status codes here...
+          // toast.error(`Error ${err.response.status}: ${err.response.data?.message || err.message}`);
+        } else {
+          toast.error('An unexpected error occurred.');
+        }
+      }
+    };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+
+    if (newPassword && newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return null;
+    }
+    if (newPassword) {
+      if (!passRe.test(newPassword)) {
+        toast.error('New password must be ≥8 chars, include at least one uppercase letter, one lowercase letter, and one digit');
+        return;
+      }
+    }
+    try {
+      const response = await fetch(`/api/user/${user.username}/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.authToken}`,
+        },
+        body: JSON.stringify({
+          currentPassword: 'googlePsw12',
+          newPassword: newPassword || undefined,
+        }),
+      });
+      if (response.status === 200) {
+/*         toast.success('Your credentials were updated. You will be logged out to re-authenticate.');
+        setTimeout(() => {
+          logout();
+          navigate('/login');
+        }, 2000); */
+        navigate('/dashboard');
+      } else {
+        const body = await response.json();
+        toast.error(body.error || 'Update failed');
+      }
+    } catch (err: unknown) {
+      let errorMessage = 'please double check your credentials';
+      if (err instanceof AxiosError && err.message)
+        errorMessage = err.message;
+      toast.error(errorMessage);
+    }
+  }
+
+  if (needPassword === true) {
+    return (
+      <Container>
+        <FormContainer onSubmit={handleSubmit}>
+        {/* <CloseButton type="button" onClick={() => {
+          setChangingPassword(false),
+          setCurrentPassword(''),
+          setNewPassword(''),
+          setConfirmPassword('')
+        }}
+        >&times;</CloseButton> */}
+        <Title>Set password</Title>
+          <FormInput
+            type="password"
+            label="Password"
+            name="Password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            required
+          />
+          <FormInput
+            type="password"
+            label="Confirm Password"
+            name="confirmPassword"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+          />
+        <ButtonContainer>
+          <SubmitBtn text="Update" />
+        </ButtonContainer>
+        </FormContainer>
+      </Container>
+    )
+  }
 
   return (
     <Container>
@@ -265,8 +390,7 @@ const Login: React.FC = () => {
         <GoogleButton
           type='button'
           onClick={() => {
-            const apiUrl = `${PROTOCOL}://localhost:${BACKEND_PORT}`;
-            window.location.href = `${apiUrl}/oauth2/google/`;
+            window.location.href = `api/oauth2/google/`;
           }}
         >
           <svg

@@ -16,7 +16,6 @@ import {
 } from '../../pages/UserProfileStyles';
 import { customFetch } from '../../utils';
 import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../../config';
 
 interface ProfileHeaderProps {
   userProfile: any;
@@ -36,11 +35,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   getFriendshipId,
 }) => {
   const { user: currentUser } = useAuth();
-  const isOnline = userProfile.online_status === 'online';
-  const apiUrl = API_URL;
+  // const isOnline = userProfile.online_status === 'online';
   const navigate = useNavigate();
-
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [avatarSrc, setAvatarSrc] = React.useState(
+    `/api/user/${userProfile.username}/avatar?t=${Date.now()}`
+  );
 
   const handleAvatarClick = () => {
     if (isCurrentUser && fileInputRef.current) {
@@ -70,13 +71,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }
       );
 
-      const avatarImg =
-        document.querySelector<HTMLImageElement>('.profile-avatar');
-      if (avatarImg) {
-        avatarImg.src = `${apiUrl}/user/${
-          userProfile.username
-        }/avatar?t=${Date.now()}`;
-      }
+      setAvatarSrc(`/api/user/${userProfile.username}/avatar?t=${Date.now()}`);
     } catch (error) {
       console.error('Error uploading avatar:', error);
     }
@@ -92,13 +87,15 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <Header>
       <AvatarContainer>
         <ProfileAvatar
-          src={`${apiUrl}/user/${userProfile.username}/avatar?t=${Date.now()}`}
+          className="profile-avatar"
+          src={avatarSrc}
           alt={`${userProfile.username}'s avatar`}
           onClick={handleAvatarClick}
           style={{ cursor: isCurrentUser ? 'pointer' : 'default' }}
         />
         {isCurrentUser && <AvatarEditOverlay>Edit</AvatarEditOverlay>}
-        <StatusIndicator $online={isOnline} />
+        {/* <StatusIndicator $online={isOnline} /> */}
+        <StatusIndicator $status={userProfile.online_status} />
 
 
         <input

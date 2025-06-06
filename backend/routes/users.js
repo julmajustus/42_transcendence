@@ -17,6 +17,8 @@ const {
 	getUserFriends,
 	removeFriend,
 	checkPassword,
+	getUserMatchList,
+	getUserStats,
 } = require('../handlers/users')
 
 const User = {
@@ -75,9 +77,21 @@ const registerUserSchema = {
 		body: {
 			type: 'object',
 			properties: {
-				username: { type: 'string'},
-				password: { type: 'string'},
-				email: { type: 'string' },
+				username: {
+					type: 'string',
+					minLength: 3,
+					maxLength: 20,
+					pattern: '^[A-Za-z0-9_]+$'
+				},
+				password: {
+					type: 'string',
+					minLength: 8,
+					pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$'
+				},
+				email: {
+					type: 'string',
+					format: 'email',
+				},
 			},
 			required: ['username', 'password', 'email' ],
 		},
@@ -95,8 +109,16 @@ const loginUserSchema = {
 		body: {
 			type: 'object',
 			properties: {
-				username: { type: 'string'},
-				password: { type: 'string'},
+				username: {
+					type: 'string',
+					minLength: 3,
+					maxLength: 20,
+					pattern: '^[A-Za-z0-9_]+$'
+				},
+				password: {
+					type: 'string',
+					minLength: 1
+				},
 			},
 			required: ['username', 'password']
 		},
@@ -215,11 +237,29 @@ function usersRoutes(fastify, options, done) {
 			body: {
 				type: 'object',
 				properties: {
-					currentPassword: { type: 'string' },
-					newPassword: { type: 'string' },
-					newUsername: { type: 'string' },
-					twoFA: { type: 'integer'},
-					newEmail: { type: 'string' },
+					currentPassword: {
+						type: 'string',
+						minLength: 1
+					},
+					newPassword: {
+						type: 'string',
+						minLength: 8,
+						pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$'
+					},
+					newUsername: {
+						type: 'string',
+						minLength: 3,
+						maxLength: 20,
+						pattern: '^[A-Za-z0-9_]+$'
+					},
+					twoFA: {
+						type: 'integer',
+						enum: [0, 1]
+					},
+					newEmail: {
+						type: 'string',
+						format: 'email'
+					},
 				},
 				required: ['currentPassword'],
 				anyOf: [
@@ -343,6 +383,85 @@ function usersRoutes(fastify, options, done) {
 		handler: getCurrentUser,
 	};
 
+	const getUserMatchListSchema = {
+		onRequest: [fastify.authenticate],
+		schema: {
+			params: {
+				type: 'object',
+				properties: {
+					username: { type: 'string', }
+				},
+				required: ['username']
+			},
+			response: {
+			200: {
+				type: 'array',
+				items: {
+					type: 'object',
+					properties: {
+						id:               { type: 'integer' },
+						opponent:         { type: 'string' },
+						opponentAvatar:   { type: 'string' },
+						result:           { type: 'string' },
+						score:            { type: 'string' },
+						date:             { type: 'string' }
+					},
+					required: [
+						'id',
+						'opponent',
+						'opponentAvatar',
+						'result',
+						'score',
+						'date'
+					]
+				}
+			},
+			404: errorResponse,
+			500: errorResponse
+			}
+		},
+		handler: getUserMatchList,
+	}
+
+	const getUserStatsSchema = {
+		onRequest: [fastify.authenticate],
+		schema: {
+			params: {
+				type: 'object',
+				properties: {
+					username: { type: 'string', }
+				},
+				required: ['username']
+			},
+			response: {
+			200: {
+				type: 'object',
+				properties: {
+				totalMatches: { type: 'integer' },
+				wins: { type: 'integer' },
+				losses: { type: 'integer' },
+				winRate: { type: 'integer' },
+				totalScored: { type: 'integer' },
+				totalConceded: { type: 'integer' },
+				tournamentsWon: { type: 'integer' },
+				},
+				required: [
+					'totalMatches',
+					'wins',
+					'losses',
+					'winRate',
+					'totalScored',
+					'totalConceded',
+					'tournamentsWon'
+				]
+			},
+			404: errorResponse,
+			500: errorResponse
+			}
+		},
+		handler: getUserStats
+	}
+
 	fastify.get('/users', getUsersSchema)
 
 	fastify.get('/user/:username', getUserSchema)
@@ -373,148 +492,9 @@ function usersRoutes(fastify, options, done) {
 
 	fastify.post('/check_password', checkPasswordSchema)
 
-	fastify.get('/user/:username/matches', async (request, reply) => {
-		const { username } = request.params;
+	fastify.get('/user/:username/matches', getUserMatchListSchema)
 
-		try {
-		// 1) Look up user ID by username
-			const userRow = await new Promise((res, rej) =>
-				db.get('SELECT id FROM users WHERE username = ?', [username],
-					(err, row) => err ? rej(err) : res(row)
-				)
-			);
-
-			if (!userRow) {
-				return reply.status(404).send({ error: 'User not found' });
-			}
-			const userId = userRow.id;
-
-			// 2) Fetch all finished matches involving that user
-			const matches = await new Promise((res, rej) =>
-				db.all(
-					`SELECT
-						id,
-						player1_id,
-						player2_id,
-						player1_score,
-						player2_score,
-						winner_id,
-						loser_id,
-						match_time
-					FROM matches
-					WHERE
-						(player1_id = ? OR player2_id = ?)
-						AND status = 'finished'
-					ORDER BY match_time DESC`,
-					[userId, userId],
-					(err, rows) => err ? rej(err) : res(rows)
-				)
-			);
-
-			// 3) Optionally post-process each row to add “opponent” and “didWin” flags
-			const result = await Promise.all(matches.map(async (m) => {
-				const isPlayer1 = m.player1_id === userId;
-				let opponentId = isPlayer1 ? m.player2_id : m.player1_id;
-				const userScore = isPlayer1 ? m.player1_score : m.player2_score;
-				const oppScore = isPlayer1 ? m.player2_score : m.player1_score;
-				const result = m.winner_id === userId ? 'win' : 'loss';
-
-				const row = await new Promise ((res, rej) => {
-					db.get('SELECT username, avatar FROM users where id = ?', [opponentId],
-						(err, row) => err ? rej(err) : res(row)
-					)
-				})
-				const opponent = row ? row.username : null
-				// const opponentAvatar = row ? row.avatar : null
-				const backendAddress = process.env.VITE_BACKEND_HOST || 'localhost'
-				const opponentAvatar = `http://${backendAddress}:8888/user/${opponent}/avatar`
-
-				return {
-					id: m.id,
-					opponent: opponent,
-					opponentAvatar: opponentAvatar,
-					result: result,
-					score: `${userScore}-${oppScore}`,
-					date: m.match_time,
-				};
-			}));
-
-			return reply.send(result);
-		} catch (err) {
-			request.log.error(`Error fetching matches for ${username}: ${err.stack}`);
-			return reply.status(500).send({ error: 'Internal server error' });
-		}
-	});
-
-	fastify.get('/user/:username/stats', async(request, reply) => {
-		const { username } = request.params;
-
-		try {
-			const userRow = await new Promise((res, rej) =>
-				db.get('SELECT id FROM users WHERE username = ?', [username],
-					(err, row) => err ? rej(err) : res(row)
-				)
-			);
-
-			if (!userRow) {
-				return reply.status(404).send({ error: 'User not found' });
-			}
-			const userId = userRow.id;
-
-			const rows = await new Promise((res, rej) =>
-				db.all(
-					`SELECT
-						player1_id,
-						player2_id,
-						player1_score,
-						player2_score,
-						winner_id
-					FROM matches
-					WHERE
-						(player1_id = ? OR player2_id = ?)
-						AND status = 'finished'
-					ORDER BY match_time DESC`,
-					[userId, userId],
-					(err, rows) => err ? rej(err) : res(rows)
-				)
-			)
-			const rowsTournament = await new Promise((res, rej) => {
-				db.all('SELECT id FROM tournaments WHERE winner_id = ?', [userId],
-					(err, rowsTournament) => err ? rej(err) : res(rowsTournament)
-				)
-			})
-			const tournamentsWon = rowsTournament ? rowsTournament.length : 0
-			const totalMatches = rows.length
-			let wins = 0
-			let totalScored = 0
-			let totalConceded = 0
-
-			for (const m of rows) {
-				if (m.winner_id === userId)
-					wins++
-				const isPlayer1 = m.player1_id === userId;
-				const scored =  isPlayer1 ? m.player1_score : m.player2_score
-				const conceded = isPlayer1 ? m.player2_score : m.player1_score
-				totalScored += scored
-				totalConceded += conceded
-			}
-			const losses = totalMatches - wins
-			const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0
-			return reply.status(200).send({
-				totalMatches,
-				wins,
-				losses,
-				winRate,
-				totalScored,
-				totalConceded,
-				tournamentsWon
-			})
-		} catch (err) {
-			request.log.error(`Error fetching matches for ${username}: ${err.stack}`);
-			return reply.status(500).send({ error: 'Internal server error' });
-		}
-
-	})
+	fastify.get('/user/:username/stats', getUserStatsSchema)
 
 	done()
 }

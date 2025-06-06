@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:54:11 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/08 14:40:41 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/19 09:51:58 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,9 @@ const Side = {
 }
 
 class Player {
-	constructor(id, side) {
+	constructor(id, username, side) {
 		this.id = id;
+		this.username = username
 		this.score = 0;
 		this.joined = false;
 		this.ready = false;
@@ -83,15 +84,15 @@ class Paddle {
 
 
 class Game {
-	constructor(player1_id, player2_id) {
+	constructor(player1_id, player1_username, player2_id, player2_username) {
 		this.finished_rounds = 0;
 		this.total_rounds = TOTAL_ROUNDS;
 		this.winner = null;
 		this.loser = null;
 		this.connected_players = 0;
 		this.players = [];
-		this.players.push(new Player(player1_id, Side.LEFT));
-		this.players.push(new Player(player2_id, Side.RIGHT));
+		this.players.push(new Player(player1_id, player1_username, Side.LEFT));
+		this.players.push(new Player(player2_id, player2_username, Side.RIGHT));
 		this.gameState = GameState.NOT_STARTED;
 		this.resetTimer = new Date();
 		this.remainingTimout = 0;
@@ -230,9 +231,16 @@ class Game {
 		}
 	}
 
-	updatePaddle(change, paddle) {
+/* 	updatePaddle(change, paddle) {
 
 		const sides = paddle.getSides();
+
+		console.log('change: ', change)
+		console.log('sides.yTop: ', sides.yTop)
+		console.log('sides.yBot : ', sides.yBot)
+		console.log('BOARD_HEIGHT: ', BOARD_HEIGHT)
+		console.log('sides.yTop - change: ', sides.yTop - change)
+		console.log('\n')
 
 		if (change < 0) {
 			if (sides.yTop - change >= 0) {
@@ -243,6 +251,26 @@ class Game {
 			if (sides.yBot + change <= BOARD_HEIGHT)
 				paddle.y_offset += change;
 		}
+	} */
+
+	updatePaddle(deltaY, paddle) {
+		const centerY0 = paddle.initial_pos[1];
+		// console.log('centerY0: ', centerY0)
+		const halfH = PADDLE_HEIGHT / 2;
+		// console.log('halfH: ', halfH)
+		const minOff = halfH - centerY0;
+		// console.log('minOff: ', minOff)
+		const maxOff = (BOARD_HEIGHT - halfH) - centerY0;
+		// console.log('maxOff: ', maxOff)
+
+		let next = paddle.y_offset + deltaY;
+		// console.log('next: ', next)
+		if (next < minOff)
+			next = minOff;
+		if (next > maxOff)
+			next = maxOff;
+		// console.log('\n')
+		paddle.y_offset = next;
 	}
 
 	moveBall() {
@@ -312,6 +340,7 @@ class Game {
 	}
 
 	refreshGame() {
+		const roundsToWin = Math.ceil(this.total_rounds / 2)
 		this.processInputs();
 		if (this.gameState === GameState.NOT_STARTED)
 		{
@@ -325,7 +354,8 @@ class Game {
 		else if (this.gameState === GameState.ACTIVE) {
 			if (this.moveBall()) {
 				this.finished_rounds += 1;
-				if (this.finished_rounds >= this.total_rounds) {
+				// if (this.finished_rounds >= this.total_rounds) {
+				if (this.players[0].score >= roundsToWin || this.players[1].score >= roundsToWin) {
 					this.gameState = GameState.FINSIHED;
 					if (this.players[0].score > this.players[1].score) {
 						this.winner = this.players[0];

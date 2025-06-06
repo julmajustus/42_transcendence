@@ -286,25 +286,28 @@ const LocalGame = () => {
 		if (addedPlayers.length !== 2 || creatorId === null || !canvasRef.current || !user?.authToken || readyToRender === false)
 			return;
 
+		canvasRef.current.focus();
+
 		// Store event handlers as named functions for cleanup
 		const keyDownHandler = (e: KeyboardEvent) => {
-			if (!rendererRef.current) return;
+			// only intercept arrow keys when canvas is focused
+			const isArrow = e.key === 'ArrowUp' || e.key === 'ArrowDown';
+			if (!isArrow || document.activeElement !== canvasRef.current)
+				return;
 
-			if (e.key === 'ArrowUp') {
-			rendererRef.current.controls.up = 1;
-			} else if (e.key === 'ArrowDown') {
-			rendererRef.current.controls.down = 1;
-			}
+			e.preventDefault();  // block page scroll
+			if (e.key === 'ArrowUp')   rendererRef.current!.controls.up   = 1;
+			if (e.key === 'ArrowDown') rendererRef.current!.controls.down = 1;
 		};
 
 		const keyUpHandler = (e: KeyboardEvent) => {
-			if (!rendererRef.current) return;
+			const isArrow = e.key === 'ArrowUp' || e.key === 'ArrowDown';
+			if (!isArrow || document.activeElement !== canvasRef.current)
+				return;
 
-			if (e.key === 'ArrowUp') {
-			rendererRef.current.controls.up = 0;
-			} else if (e.key === 'ArrowDown') {
-			rendererRef.current.controls.down = 0;
-			}
+			e.preventDefault();
+			if (e.key === 'ArrowUp')   rendererRef.current!.controls.up   = 0;
+			if (e.key === 'ArrowDown') rendererRef.current!.controls.down = 0;
 		};
 
 		// Create the renderer using the adapter
@@ -340,7 +343,7 @@ const LocalGame = () => {
 			document.removeEventListener('keyup', keyUpHandler);
 
 			rendererRef.current = null;
-			setTimeout(() => { navigate('/dashboard'); }, 3_000);
+			// setTimeout(() => { navigate('/dashboard'); }, 3_000);
 		};
 	}, [addedPlayers, user?.authToken, creatorId, readyToRender]);
 
@@ -414,6 +417,7 @@ const LocalGame = () => {
 		ref={canvasRef}
 		width={DEFAULT_WIDTH}
 		height={DEFAULT_HEIGHT}
+		tabIndex={0}
 	  />
 	)}
 	</Container>

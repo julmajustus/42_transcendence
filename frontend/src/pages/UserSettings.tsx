@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { FormInput, SubmitBtn } from '../components';
-import { API_URL } from '../config';
 
 const gridEffect = keyframes`
   0% { background-position: 0px 0px; }
@@ -266,11 +265,12 @@ const UserSettings = () => {
 	const [changingEmail, setChangingEmail] = useState(false)
 	const [newEmail, setNewEmail] = useState("");
 	const [confirmEmail, setConfirmEmail] = useState("");
+	const [gmailAuth, setGmailAuth] = useState(false)
 
 	useEffect(() => {
 		(async () => {
 		try {
-			const resp = await fetch(`${API_URL}/user/me`, {
+			const resp = await fetch(`/api/user/me`, {
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${user.authToken}`,
@@ -280,6 +280,8 @@ const UserSettings = () => {
 			const data = await resp.json();
 			// console.log(data)
 			setTwoFAEnabled(Number(data.two_fa) === 1);
+			if (data.google_id)
+				setGmailAuth(true)
 		} catch (err) {
 			console.error('Failed to fetch 2FA status', err);
 			toast.error('Could not load 2FA status');
@@ -289,6 +291,10 @@ const UserSettings = () => {
 	// console.log('twoFAEnabled: ', twoFAEnabled)
 	
 	const handleToggle2FA = () => {
+		if (gmailAuth === true) {
+			toast.error('2FA is not available ig logged in with google')
+			return
+		}
 		setTwoFAEnabled(prev => !prev)
 		setTimeout(() => {
 			setChangingtwoFA(true)
@@ -298,39 +304,54 @@ const UserSettings = () => {
 	const handleChangeUsername = () => {
 		setChangingUsername(true)
 	}
-
+	
 	const handleChangePassword = () => {
 		setChangingPassword(true)
 	}
-
+	
 	const handleChangeEmail = () => {
+		if (gmailAuth === true) {
+			toast.error('Change email is not possible if logged in with google')
+			return
+		}
 		setChangingEmail(true)
 	}
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
+		const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		const userRe = /^[A-Za-z0-9_]{3,20}$/
+		const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+
 		if (newPassword && newPassword !== confirmPassword) {
 			toast.error('Passwords do not match');
 			return null;
 		}
-
 		if (newEmail && newEmail !== confirmEmail) {
 			toast.error('Emails do not match');
 			return null;
 		}
-
 		if (newUsername) {
-			const alphanumericRegex = /^[a-zA-Z0-9_.!-]+$/;
-			if (!alphanumericRegex.test(newUsername)) {
-				toast.error(
-					"Username must contain only alphanumeric characters and special characters (_, ., !, -).",
-				);
+			if (!userRe.test(newUsername)) {
+				toast.error('Username must be 3–20 characters and contain only letters, numbers, or underscore');
+				return;
+			}
+		}
+		if (newPassword) {
+			if (!passRe.test(newPassword)) {
+				toast.error('New password must be ≥8 chars, include at least one uppercase letter, one lowercase letter, and one digit');
+				return;
+			}
+		}
+		if (newEmail) {
+			if (!emailRe.test(newEmail)) {
+				toast.error('Please enter a valid email address');
 				return;
 			}
 		}
 		try {
-			const response = await fetch(`${API_URL}/user/${user.username}/update`, {
+			const response = await fetch(`/api/user/${user.username}/update`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -366,7 +387,12 @@ const UserSettings = () => {
 		return (
 			<Container>
 				<FormContainer onSubmit={handleSubmit}>
-				<CloseButton type="button" onClick={() => setChangingUsername(false)}>&times;</CloseButton>
+				<CloseButton type="button" onClick={() => {
+					setChangingUsername(false),
+					setNewUsername(''),
+					setCurrentPassword('')
+				}}
+				>&times;</CloseButton>
 				<Title>Change username</Title>
 				<FormInput
 					type="text"
@@ -395,7 +421,13 @@ const UserSettings = () => {
 		return (
 			<Container>
 				<FormContainer onSubmit={handleSubmit}>
-				<CloseButton type="button" onClick={() => setChangingPassword(false)}>&times;</CloseButton>
+				<CloseButton type="button" onClick={() => {
+					setChangingPassword(false),
+					setCurrentPassword(''),
+					setNewPassword(''),
+					setConfirmPassword('')
+				}}
+				>&times;</CloseButton>
 				<Title>Change password</Title>
 					<FormInput
 						type="password"
@@ -434,6 +466,7 @@ const UserSettings = () => {
 				<CloseButton type="button" onClick={() => {
 					setChangingtwoFA(false);
 					setTwoFAEnabled(prev => !prev);
+					setCurrentPassword('')
 				}}
 				>
 					&times;
@@ -459,7 +492,13 @@ const UserSettings = () => {
 		return (
 			<Container>
 				<FormContainer onSubmit={handleSubmit}>
-				<CloseButton type="button" onClick={() => setChangingPassword(false)}>&times;</CloseButton>
+				<CloseButton type="button" onClick={() => {
+					setChangingEmail(false),
+					setNewEmail(''),
+					setConfirmEmail('')
+					setCurrentPassword('')
+				}}
+				>&times;</CloseButton>
 				<Title>Change email</Title>
 					<FormInput
 						type="email"

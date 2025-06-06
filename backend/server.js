@@ -2,15 +2,9 @@ const fs = require('fs')
 const path = require('path')
 const fastify = require('fastify')({
 	logger: true,
-	// https: {
-	// 	key: fs.readFileSync(path.join(__dirname, '../etc/transcendence/certs', 'ssl.key')), // to uncomment for https
-	// 	cert: fs.readFileSync(path.join(__dirname, '../etc/transcendence/certs', 'ssl.crt')) // to uncomment for https
-	// }
 })
 
 require('./cron');
-
-const fastifyOAuth2 = require('@fastify/oauth2')
 
 if (process.env.NODE_ENV !== 'test') {
 	require('dotenv').config();
@@ -23,29 +17,6 @@ if (process.env.NODE_ENV !== 'test') {
 		console.error("Error loading dotenv:", error.message);
 	}
 }
-
-require('dotenv').config();
-const ALLOWED_ORIGINS = [
-	'http://localhost:5173',
-	process.env.VITE_FRONTEND_URL_FOR_CORS,
-].filter(Boolean); // drop any undefined
-
-console.log("allowd origins: ", ALLOWED_ORIGINS)
-console.log(process.env.VITE_FRONTEND_URL_FOR_CORS)
-
-fastify.register(require('@fastify/cors'), {
-	origin: (origin, cb) => {
-		// allow requests like curl or mobile apps with no origin header
-		if (!origin) return cb(null, true);
-
-		if (ALLOWED_ORIGINS.includes(origin)) {
-			return cb(null, true);
-		}
-		return cb(new Error(`Origin ${origin} not allowed by CORS`), false);
-	},
-	methods: ['GET', 'POST', 'PUT', 'DELETE'],
-	credentials: true,
-});
 
 fastify.register(import('@fastify/swagger'), {
 	swagger: {
@@ -90,17 +61,17 @@ fastify.register(require('@fastify/static'), {
 fastify.register(require('@fastify/multipart'))
 fastify.register(require('@fastify/websocket'))
 
-fastify.register(require('./routes/auth'))
+fastify.register(require('./routes/auth'), { prefix: '/api' })
 
-fastify.register(require('./routes/users'))
+fastify.register(require('./routes/users'), { prefix: '/api' })
 
-fastify.register(require('./routes/google'))
+fastify.register(require('./routes/google'), { prefix: '/api' })
 
-fastify.register(require('./routes/game'))
+fastify.register(require('./routes/game'), { prefix: '/api' })
 
-fastify.register(require('./routes/tournaments'))
+fastify.register(require('./routes/tournaments'), { prefix: '/api' })
 
-fastify.register(require('./routes/matchmaking'));
+fastify.register(require('./routes/matchmaking'), { prefix: '/api' });
 
 module.exports = fastify
 
@@ -110,7 +81,7 @@ const start = async () => {
   try {
     await fastify.listen({ port: PORT, host: '0.0.0.0' })
     /* c8 ignore start */
-    console.log(`Server listening on http://localhost:${PORT}`)
+    console.log(`Server running on port ${PORT}`)
     /* c8 ignore stop */
   } catch (error) {
     fastify.log.error(error)

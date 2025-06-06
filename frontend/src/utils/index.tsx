@@ -1,9 +1,7 @@
 import axios from 'axios';
-import { API_URL } from '../config';
-console.log("API_URL in customFetch: ", API_URL)
 
 export const customFetch = axios.create({
-  baseURL: API_URL,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
 	online_status TEXT,
 	two_fa BOOLEAN,
 	two_fa_code TEXT,
-	two_fa_code_expiration INTEGER
-
+	two_fa_code_expiration INTEGER,
+	last_seen INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS friends (

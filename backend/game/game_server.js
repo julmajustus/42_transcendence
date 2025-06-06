@@ -6,7 +6,7 @@
 /*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/04 09:40:51 by pleander          #+#    #+#             */
-/*   Updated: 2025/05/09 17:58:35 by mpellegr         ###   ########.fr       */
+/*   Updated: 2025/05/15 17:30:37 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,19 @@ class Error {
 	}
 };
 
+const getUserById = async (userId) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT username FROM users WHERE id = ?',
+      [userId],
+      (err, row) => {
+        if (err) return reject(err);
+        resolve(row);
+      }
+    );
+  });
+};
+
 class GameServer {
 	constructor() {
 		this.multiplayerGames = new Map();
@@ -58,20 +71,24 @@ class GameServer {
 		}
 	}
 
-	createMultiplayerGame(game_id, player1_id, player2_id) {
+	async createMultiplayerGame(game_id, player1_id, player2_id) {
 		if (player1_id === player2_id) {
 			throw new Error(ErrorType.BAD_PLAYER_ID, "Error: bad player id")
 		}
 		if (this.multiplayerGames.has(game_id)) {
 			throw new Error(ErrorType.GAME_ID_ALREADY_EXISTS, `Error: game id ${game_id} already exists`);
 		}
-		const game = new Game(player1_id, player2_id);
+		const [user1, user2] = await Promise.all([
+			getUserById(player1_id),
+			getUserById(player2_id),
+		]);
+		const game = new Game(player1_id, user1.username, player2_id, user2.username);
 		game.type = GameType.MULTI_PLAYER;
 		this.multiplayerGames.set(game_id, game);
 	}
 
 	// createSingleplayerGame(player_id) {
-	createSingleplayerGame(game_id, player1_id, player2_id) { //for local game if user refresh the page before finishing or starting the game also not started/not finished games are stored...should not be a problem for local games
+	async createSingleplayerGame(game_id, player1_id, player2_id) { //for local game if user refresh the page before finishing or starting the game also not started/not finished games are stored...should not be a problem for local games
 		// if (this.singleplayerGames.has(player_id)) {
 /* 		if (this.singleplayerGames.has(game_id)) { don't think it is needed for local game
 			throw new Error(ErrorType.TOO_MANY_SINGLEPLAYER_GAMES, "Error: player can only run one singleplayer game at a time");
@@ -79,8 +96,12 @@ class GameServer {
 		if (player1_id === player2_id) {
 			throw new Error(ErrorType.BAD_PLAYER_ID, "Error: bad player id")
 		}
+		const [user1, user2] = await Promise.all([
+			getUserById(player1_id),
+			getUserById(player2_id),
+		]);
 		// const game = new Game(SinglePlayerIds.PLAYER_1, SinglePlayerIds.PLAYER_2);
-		const game = new Game(player1_id, player2_id);
+		const game = new Game(player1_id, user1.username, player2_id, user2.username);
 		game.type = GameType.SINGLE_PLAYER;
 		// this.singleplayerGames.set(player_id, game);
 		this.singleplayerGames.set(game_id, game);

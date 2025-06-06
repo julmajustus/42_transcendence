@@ -43,7 +43,6 @@ const getUser = (request, reply) => {
 			request.log.warn(`User ${identifier} not found`)
 			return reply.status(404).send({error: `User ${identifier} not found`})
 		}
-		// row.avatar = `http://localhost:8888/user/${row.username}/avatar`
 		return reply.send(row)
 	})
 }
@@ -51,11 +50,6 @@ const getUser = (request, reply) => {
 const registerUser = async (request, reply) => {
 	const { username, email, password } = request.body;
 	request.log.info(`Received registration request: ${username}`);
-	const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-	if (!isValid) {
-		request.log.warn('Invalid email');
-		return reply.status(400).send({ error: "User provided wrong email" });
-	}
 	try {
 		const existingUser = await new Promise((resolve, reject) => {
 			db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
@@ -168,8 +162,9 @@ const loginUser = async (request, reply) => {
 			const token = await reply.jwtSign({ id: user.id, username: user.username } ,{ expiresIn: '24h'});
 			request.log.info(`Generated JWT token for user ${user.username}`);
 
+			const now = Math.floor(Date.now() / 1000)
 			await new Promise((resolve, reject) => {
-				db.run('UPDATE users SET online_status = ? WHERE id = ?', ['online', user.id], (err) => {
+				db.run('UPDATE users SET online_status = ?, last_seen = ? WHERE id = ?', ['online', now, user.id], (err) => {
 					if (err)
 						return reject(err)
 					resolve()
@@ -596,7 +591,7 @@ const getCurrentUser = async (request, reply) => {
 	try {
 		const user = await new Promise((resolve, reject) => {
 			db.get(
-				'SELECT id, username, email, avatar, online_status, two_fa FROM users WHERE id = ?',
+				'SELECT id, username, email, avatar, online_status, two_fa, google_id FROM users WHERE id = ?',
 				[userId],
 				(err, row) => {
 					if (err) return reject(err);
@@ -638,12 +633,149 @@ const checkPassword = async(request, reply) => {
 		// Use bcrypt to compare the plain‑text input to the stored hash
 		const passwordsMatch = await bcrypt.compare(inPwd, storedPwd);
 		if (!passwordsMatch) {
-			return reply.status(401).send({ error: 'Invalid password' });
+			return reply.send({ ok: false, error: 'Invalid password' });
 		}
 		// If we get here, the password is correct:
 		return reply.send({ ok: true });
 	} catch (err) {
 		request.log.error(`Error checking password for ${username}: ${err.message}`);
+		return reply.status(500).send({ error: 'Internal server error' });
+	}
+}
+
+const getUserMatchList = async (request, reply) => {
+	const { username } = request.params;
+
+	try {
+		const userRow = await new Promise((res, rej) =>
+			db.get('SELECT id FROM users WHERE username = ?', [username],
+				(err, row) => err ? rej(err) : res(row)
+			)
+		);
+
+		if (!userRow) {
+			return reply.status(404).send({ error: 'User not found' });
+		}
+		const userId = userRow.id;
+
+		const matches = await new Promise((res, rej) =>
+			db.all(
+				`SELECT
+					id,
+					player1_id,
+					player2_id,
+					player1_score,
+					player2_score,
+					winner_id,
+					loser_id,
+					match_time
+				FROM matches
+				WHERE
+					(player1_id = ? OR player2_id = ?)
+					AND status = 'finished'
+				ORDER BY match_time DESC`,
+				[userId, userId],
+				(err, rows) => err ? rej(err) : res(rows)
+			)
+		);
+
+		const result = await Promise.all(matches.map(async (m) => {
+			const isPlayer1 = m.player1_id === userId;
+			let opponentId = isPlayer1 ? m.player2_id : m.player1_id;
+			const userScore = isPlayer1 ? m.player1_score : m.player2_score;
+			const oppScore = isPlayer1 ? m.player2_score : m.player1_score;
+			const result = m.winner_id === userId ? 'win' : 'loss';
+
+			const row = await new Promise ((res, rej) => {
+				db.get('SELECT username, avatar FROM users where id = ?', [opponentId],
+					(err, row) => err ? rej(err) : res(row)
+				)
+			})
+			const opponent = row ? row.username : null
+			const opponentAvatar = `/api/user/${opponent}/avatar`
+
+			return {
+				id: m.id,
+				opponent: opponent,
+				opponentAvatar: opponentAvatar,
+				result: result,
+				score: `${userScore}-${oppScore}`,
+				date: m.match_time,
+			};
+		}));
+
+		return reply.send(result);
+	} catch (err) {
+		request.log.error(`Error fetching matches for ${username}: ${err.stack}`);
+		return reply.status(500).send({ error: 'Internal server error' });
+	}
+}
+
+const getUserStats = async(request, reply) => {
+	const { username } = request.params;
+
+	try {
+		const userRow = await new Promise((res, rej) =>
+			db.get('SELECT id FROM users WHERE username = ?', [username],
+				(err, row) => err ? rej(err) : res(row)
+			)
+		);
+
+		if (!userRow) {
+			return reply.status(404).send({ error: 'User not found' });
+		}
+		const userId = userRow.id;
+
+		const rows = await new Promise((res, rej) =>
+			db.all(
+				`SELECT
+					player1_id,
+					player2_id,
+					player1_score,
+					player2_score,
+					winner_id
+				FROM matches
+				WHERE
+					(player1_id = ? OR player2_id = ?)
+					AND status = 'finished'
+				ORDER BY match_time DESC`,
+				[userId, userId],
+				(err, rows) => err ? rej(err) : res(rows)
+			)
+		)
+		const rowsTournament = await new Promise((res, rej) => {
+			db.all('SELECT id FROM tournaments WHERE winner_id = ?', [userId],
+				(err, rowsTournament) => err ? rej(err) : res(rowsTournament)
+			)
+		})
+		const tournamentsWon = rowsTournament ? rowsTournament.length : 0
+		const totalMatches = rows.length
+		let wins = 0
+		let totalScored = 0
+		let totalConceded = 0
+
+		for (const m of rows) {
+			if (m.winner_id === userId)
+				wins++
+			const isPlayer1 = m.player1_id === userId;
+			const scored =  isPlayer1 ? m.player1_score : m.player2_score
+			const conceded = isPlayer1 ? m.player2_score : m.player1_score
+			totalScored += scored
+			totalConceded += conceded
+		}
+		const losses = totalMatches - wins
+		const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0
+		return reply.status(200).send({
+			totalMatches,
+			wins,
+			losses,
+			winRate,
+			totalScored,
+			totalConceded,
+			tournamentsWon
+		})
+	} catch (err) {
+		request.log.error(`Error fetching matches for ${username}: ${err.stack}`);
 		return reply.status(500).send({ error: 'Internal server error' });
 	}
 }
@@ -664,4 +796,6 @@ module.exports = {
 	getUserFriends,
 	removeFriend,
 	checkPassword,
+	getUserMatchList,
+	getUserStats
 }

@@ -9,7 +9,6 @@ import {
   } from '../utils/GameRendererAdapter';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'
-import { API_URL } from '../config';
 import axios from 'axios';
 
 const DEFAULT_WIDTH = 800;
@@ -254,7 +253,7 @@ const LocalTournament = () => {
 
   const joinTournament = useCallback(async (playerId: number) => {
     try {
-      const res  = await fetch(`${API_URL}/tournament/auto`, {
+      const res  = await fetch(`/api/tournament/auto`, {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -382,7 +381,7 @@ const LocalTournament = () => {
     if (!tourneyId) return
     try {
       const resp = await fetch(
-        `${API_URL}/tournament/${tourneyId}/bracket`,
+        `/api/tournament/${tourneyId}/bracket`,
         { headers: { Authorization: `Bearer ${user!.authToken}` } }
       )
       if (!resp.ok) throw new Error(resp.statusText)
@@ -392,7 +391,7 @@ const LocalTournament = () => {
 
       if (tournament.status === 'completed' && !championName) {
         const info = await (
-          await fetch(`${API_URL}/user/${tournament.winner_id}`, {
+          await fetch(`/api/user/${tournament.winner_id}`, {
             headers: { Authorization: `Bearer ${user!.authToken}` },
           })
         ).json()
@@ -413,25 +412,28 @@ const LocalTournament = () => {
         !gameId)
 			return;
 
+    canvasRef.current.focus();
+
 		// Store event handlers as named functions for cleanup
 		const keyDownHandler = (e: KeyboardEvent) => {
-			if (!rendererRef.current) return;
+			// only intercept arrow keys when canvas is focused
+			const isArrow = e.key === 'ArrowUp' || e.key === 'ArrowDown';
+			if (!isArrow || document.activeElement !== canvasRef.current)
+				return;
 
-			if (e.key === 'ArrowUp') {
-			rendererRef.current.controls.up = 1;
-			} else if (e.key === 'ArrowDown') {
-			rendererRef.current.controls.down = 1;
-			}
+			e.preventDefault();  // block page scroll
+			if (e.key === 'ArrowUp')   rendererRef.current!.controls.up   = 1;
+			if (e.key === 'ArrowDown') rendererRef.current!.controls.down = 1;
 		};
 
 		const keyUpHandler = (e: KeyboardEvent) => {
-			if (!rendererRef.current) return;
+			const isArrow = e.key === 'ArrowUp' || e.key === 'ArrowDown';
+			if (!isArrow || document.activeElement !== canvasRef.current)
+				return;
 
-			if (e.key === 'ArrowUp') {
-			rendererRef.current.controls.up = 0;
-			} else if (e.key === 'ArrowDown') {
-			rendererRef.current.controls.down = 0;
-			}
+			e.preventDefault();
+			if (e.key === 'ArrowUp')   rendererRef.current!.controls.up   = 0;
+			if (e.key === 'ArrowDown') rendererRef.current!.controls.down = 0;
 		};
 
 		// Create the renderer using the adapter
@@ -465,7 +467,7 @@ const LocalTournament = () => {
 
       try {
         await fetch(
-          `${API_URL}/tournament/${tourneyId}/match/${match.tm_id}/result`,
+          `/api/tournament/${tourneyId}/match/${match.tm_id}/result`,
           {
             method:  'POST',
             headers: {
@@ -480,7 +482,7 @@ const LocalTournament = () => {
         )
 
         const info = await (
-          await fetch(`${API_URL}/user/${winner.id}`, {
+          await fetch(`/api/user/${winner.id}`, {
             headers: { Authorization: `Bearer ${user!.authToken}` },
           })
         ).json()
@@ -525,14 +527,20 @@ const LocalTournament = () => {
   }
 
   if (gameId) {
-    let currentGameId = bracket[0].tm_status === 'scheduled' ? 1 : 2
-    if (bracket.length === 3 && bracket[1].tm_status !== 'scheduled')
-      currentGameId = 3
     return (
       <TournamentContainer>
-        <canvas id="game-canvas" style={{ display: 'none' }} width={1} height={1} />
-        <h1>Game #{currentGameId}</h1>
-        <GameCanvas ref={canvasRef} width={DEFAULT_WIDTH} height={DEFAULT_HEIGHT} />
+        <canvas
+          id="game-canvas"
+          style={{ display: 'none' }}
+          width={1} height={1}
+        />
+        {/* <h1>Game #{currentGameId}</h1> */}
+        <GameCanvas
+          ref={canvasRef}
+          width={DEFAULT_WIDTH}
+          height={DEFAULT_HEIGHT}
+          tabIndex={0}
+        />
       </TournamentContainer>
     )
   }
@@ -604,7 +612,7 @@ const LocalTournament = () => {
   if (addedPlayers.length === 4) {
     return (
       <TournamentContainer>
-    <h1>Tournament #{tourneyId} Bracket</h1>
+    <h1>Tournament {/* #{tourneyId} */} Bracket</h1>
       {winnerName && <Status>🎉 {winnerName} wins! 🎉</Status>}
       <p>Select your match to ▶ Play:</p>
 

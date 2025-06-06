@@ -85,13 +85,29 @@ const StyledLink = styled(Link)`
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const email = formData.get('identifier') as string;
-  const username = formData.get('username') as string;
-  const password = formData.get('password') as string;
-  const confirmPassword = formData.get('confirmPassword') as string;
+  const email = (formData.get('identifier') || '').toString().trim();
+  const username = (formData.get('username') || '').toString().trim();
+  const password = (formData.get('password') || '').toString();
+  const confirmPassword = (formData.get('confirmPassword') || '').toString();
 
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const userRe = /^[A-Za-z0-9_]{3,20}$/
+  const passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+
+  const errors: string[] = []
+
+  if (!emailRe.test(email))
+    errors.push('Please enter a valid email address')
+  if (!userRe.test(username))
+    errors.push('Username must be 3–20 characters and contain only letters, numbers, or underscore')
+  if (!passRe.test(password))
+    errors.push('Password must be ≥8 chars, include at least one uppercase letter, one lowercase letter and one digit')
   if (password !== confirmPassword) {
-    toast.error('Passwords do not match');
+    errors.push('Passwords do not match')
+  }
+
+  if (Object.keys(errors).length > 0) {
+    Object.values(errors).forEach(msg => toast.error(msg));
     return null;
   }
 

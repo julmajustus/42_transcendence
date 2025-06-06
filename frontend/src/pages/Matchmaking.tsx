@@ -7,7 +7,6 @@ import {
 	createGameRendererAdapter,
 	GameRendererType,
 } from '../utils/GameRendererAdapter';
-import { API_URL } from '../config';
 
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
@@ -43,26 +42,37 @@ const Matchmaking = () => {
 	const navigate = useNavigate();
 	useEffect(() => {
 		if (!gameId || !user?.authToken) return;
-
+		
 		const canvas = canvasRef.current;
 		if (!canvas) {
 			console.error('Canvas is not ready');
 			return;
 		}
-
+		
 		const renderer = createGameRendererAdapter(gameId, user.authToken, canvas, 'multi');
-
+		rendererRef.current = renderer
+		
+		canvas.focus();
 
 		const keyDown = (e: KeyboardEvent) => {
-			if (!renderer) return;
-			if (e.key === 'ArrowUp') renderer.controls.up = 1;
-			if (e.key === 'ArrowDown') renderer.controls.down = 1;
+			// only intercept arrow keys when canvas is focused
+			const isArrow = e.key === 'ArrowUp' || e.key === 'ArrowDown';
+			if (!isArrow || document.activeElement !== canvasRef.current)
+				return;
+
+			e.preventDefault();  // block page scroll
+			if (e.key === 'ArrowUp')   rendererRef.current!.controls.up   = 1;
+			if (e.key === 'ArrowDown') rendererRef.current!.controls.down = 1;
 		};
 
 		const keyUp = (e: KeyboardEvent) => {
-			if (!renderer) return;
-			if (e.key === 'ArrowUp') renderer.controls.up = 0;
-			if (e.key === 'ArrowDown') renderer.controls.down = 0;
+			const isArrow = e.key === 'ArrowUp' || e.key === 'ArrowDown';
+			if (!isArrow || document.activeElement !== canvasRef.current)
+				return;
+
+			e.preventDefault();
+			if (e.key === 'ArrowUp')   rendererRef.current!.controls.up   = 0;
+			if (e.key === 'ArrowDown') rendererRef.current!.controls.down = 0;
 		};
 
 		document.addEventListener('keydown', keyDown);
@@ -70,11 +80,12 @@ const Matchmaking = () => {
 		renderer.start();
 
 		renderer.onGameOver = async (winner: { id: number }) => {
-			setGameId(null);
-			setPendingId(null);
+			// setGameId(null);
+			// setPendingId(null);
+			setTimeout(() => navigate("/dashboard"), 3_000);
 			try {
 				// fetch the winner’s username
-				const resp = await fetch(`${API_URL}/user/${winner.id}`, {
+				const resp = await fetch(`/api/user/${winner.id}`, {
 					headers: { Authorization: `Bearer ${user.authToken}` }
 				});
 				const body = await resp.json();
@@ -87,9 +98,11 @@ const Matchmaking = () => {
 
 		return () => {
 			renderer?.socket?.close();
+			setGameId(null);
+			setPendingId(null);
 			document.removeEventListener('keydown', keyDown);
 			document.removeEventListener('keyup', keyUp);
-			setTimeout(() => {navigate('/'); }, 5_000);
+			// setTimeout(() => {navigate('/'); }, 5_000);
 		};
 	}, [gameId, user?.authToken]);
 
@@ -105,7 +118,7 @@ const Matchmaking = () => {
 			isMatching = true;
 
 			try {
-				const res = await fetch(`${API_URL}/matchmaking`, {
+				const res = await fetch(`/api/matchmaking`, {
 					method: 'POST',
 					headers: { Authorization: `Bearer ${user.authToken}` }
 				});
@@ -141,24 +154,25 @@ const Matchmaking = () => {
 		width={1}
 		height={1}
 		/>
-		<h1>Pong Game</h1>
+		{/* <h1>Pong Game</h1> */}
 
 		{!gameId && pendingId && (
 			<Status>Waiting for another player to join…</Status>
 		)}
 
-		{winnerName && (
+{/* 		{winnerName && (
 			<Status>🎉 {winnerName} wins! Well done, gg… 🎉</Status>
-		)}
+		)} */}
 	
 		{/* once match is ready */}
 		{gameId && (
 			<>
-			<Status>Game ID: {gameId}</Status>
+			{/* <Status>Game ID: {gameId}</Status> */}
 			<GameCanvas
 			ref={canvasRef}
 			width={DEFAULT_WIDTH}
 			height={DEFAULT_HEIGHT}
+			tabIndex={0}
 			/>
 			</>
 		)}

@@ -1,6 +1,7 @@
 // context/AuthContext.tsx
 import { jwtDecode } from 'jwt-decode';
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { toast } from 'react-toastify';
 
 export interface User {
   id: string;
@@ -37,13 +38,52 @@ interface DecodedToken {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-
+  
+  // comment out this for testing with one user for each session
   useEffect(() => {
     if (user)
       sessionStorage.setItem('authUser', JSON.stringify(user))
     else
       sessionStorage.removeItem('authUser')
   }, [user])
+
+// comment out this for storing only in localhost and having 1 user for all sessions
+/* const [user, setUser] = useState<User | null>(() => {
+  const stored = localStorage.getItem('user')
+  return stored ? JSON.parse(stored) as User : null
+  })
+  
+  useEffect(() => {
+    if (!user) {
+      localStorage.removeItem('user')
+      return
+      }
+      
+      // decode exp and compute how long until it fires
+      const { exp } = jwtDecode<DecodedToken>(user.authToken)
+      const now = Date.now()
+      const msUntilExpiry = exp * 1000 - now
+      
+      if (msUntilExpiry <= 0) {
+        // already expired
+        toast.info('Session expired, you are being logged out…')
+        setTimeout(logout, 1000)
+        return
+        }
+        
+// 1) schedule the toast exactly when the token expires
+const toastTimer = setTimeout(() => {
+  toast.info('Session expired, you are being logged out…')
+}, msUntilExpiry)
+
+// 2) schedule the actual logout a little after the toast
+const logoutTimer = setTimeout(logout, msUntilExpiry + 1000)
+
+return () => {
+  clearTimeout(toastTimer)
+  clearTimeout(logoutTimer)
+}
+}, [user]) */
 
   const login = (userData: { username: string; authToken: string }) => {
     try {

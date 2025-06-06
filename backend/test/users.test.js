@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   users.test.js                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmarkaid <pmarkaid@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: mpellegr <mpellegr@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/02 16:28:11 by jmakkone          #+#    #+#             */
-/*   Updated: 2025/04/24 15:49:13 by pmarkaid         ###   ########.fr       */
+/*   Updated: 2025/05/26 15:21:54 by mpellegr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,11 +42,11 @@ t.before(async () => {
 // TEST 1: Registration (Positive)
 
 t.test('Test 1: POST /user/register (Positive) - creates a new user', async t => {
-	const payload = { username: 'testuser', password: 'secret', email: 'testuser@aaa.aaa' };
+	const payload = { username: 'testuser', password: 'Qwerty12', email: 'testuser@aaa.aaa' };
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: '/api/user/register',
 		payload,
 	});
 
@@ -61,11 +61,11 @@ t.test('Test 1: POST /user/register (Positive) - creates a new user', async t =>
 // TEST 2: Registration (Negative) - Duplicate username
 
 t.test('Test 2: POST /user/register (Duplicate) - returns 400 if username already exists', async t => {
-	const payload = { username: 'testuser', password: 'anothersecret', email: 'testuser@testuser.aaa' };
+	const payload = { username: 'testuser', password: 'Qwerty12', email: 'testuser@testuser.aaa' };
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: '/api/user/register',
 		payload,
 	});
 
@@ -78,11 +78,11 @@ t.test('Test 2: POST /user/register (Duplicate) - returns 400 if username alread
 // TEST 3: Login (Positive)
 
 t.test('Test 3: POST /user/login (Positive) - logs in existing user', async t => {
-	const payload = { username: 'testuser', password: 'secret' };
+	const payload = { username: 'testuser', password: 'Qwerty12' };
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
+		url: '/api/user/login',
 		payload,
 	});
 
@@ -96,11 +96,11 @@ t.test('Test 3: POST /user/login (Positive) - logs in existing user', async t =>
 // TEST 4: Login (Negative) - Wrong password
 
 t.test('Test 4: POST /user/login (Wrong password) - returns 401', async t => {
-	const payload = { username: 'testuser', password: 'wrongpassword' };
+	const payload = { username: 'testuser', password: 'Wrongpassword12' };
 
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
+		url: '/api/user/login',
 		payload,
 	});
 
@@ -115,8 +115,8 @@ t.test('Test 4: POST /user/login (Wrong password) - returns 401', async t => {
 t.test('Test 5: POST /user/login (No such user) - returns 400', async t => {
 	const res = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
-		payload: { username: 'nonexistent', password: 'whatever' },
+		url: '/api/user/login',
+		payload: { username: 'nonexistent', password: 'Qwerty12' },
 	});
 	t.equal(res.statusCode, 400, 'Should return 400 for non-existent user');
 	const body = JSON.parse(res.payload);
@@ -130,8 +130,8 @@ t.test('Test 6: PUT /user/:username/update => returns 400 if user is deleted fir
 	// 1 Register
 	const regRes = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
-		payload: { username: 'tempuser', password: 'temp', email: 'tempuser@aaa.aaa' },
+		url: '/api/user/register',
+		payload: { username: 'tempuser', password: 'Qwerty12', email: 'tempuser@aaa.aaa' },
 	});
 	t.equal(regRes.statusCode, 200, 'Temporary user registration succeeds');
 	const regBody = JSON.parse(regRes.payload);
@@ -139,8 +139,8 @@ t.test('Test 6: PUT /user/:username/update => returns 400 if user is deleted fir
 	// 2 Login
 	const loginRes = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
-		payload: { username: 'tempuser', password: 'temp' },
+		url: '/api/user/login',
+		payload: { username: 'tempuser', password: 'Qwerty12' },
 	});
 	t.equal(loginRes.statusCode, 200, 'Login of tempuser succeeds');
 	const token = JSON.parse(loginRes.payload).token;
@@ -153,9 +153,9 @@ t.test('Test 6: PUT /user/:username/update => returns 400 if user is deleted fir
 	// Attempt to update now-deleted user => 400
 	const updateRes = await fastify.inject({
 		method: 'PUT',
-		url: '/user/tempuser/update',
+		url: '/api/user/tempuser/update',
 		headers: { Authorization: `Bearer ${token}` },
-		payload: { currentPassword: 'temp', newPassword: 'newtemp' },
+		payload: { currentPassword: 'Qwerty12', newPassword: 'Qwerty23' },
 	});
 	t.equal(updateRes.statusCode, 400, 'Should return 400 when user not found');
 	t.match(JSON.parse(updateRes.payload).error, /user not found/i);
@@ -170,7 +170,7 @@ t.test('Test 7: GET /user/:id => returns the registered user', async t => {
 	t.ok(userUsername, 'User username must be set from test #1');
 	const res = await fastify.inject({
 		method: 'GET',
-		url: `/user/${userUsername}`,
+		url: `/api/user/${userUsername}`,
 	});
 	t.equal(res.statusCode, 200, 'Should return 200 for existing user');
 	const body = JSON.parse(res.payload);
@@ -184,7 +184,7 @@ t.test('Test 7: GET /user/:id => returns the registered user', async t => {
 t.test('Test 8: GET /users => 200 + array containing testuser', async t => {
 	const res = await fastify.inject({
 		method: 'GET',
-		url: '/users',
+		url: '/api/users',
 	});
 	t.equal(res.statusCode, 200, 'GET /users returns 200');
 	const list = JSON.parse(res.payload);
@@ -199,7 +199,7 @@ t.test('Test 8: GET /users => 200 + array containing testuser', async t => {
 t.test('Test 9: GET /user/:id (Non-existent) => returns 404', async t => {
 	const res = await fastify.inject({
 		method: 'GET',
-		url: '/user/999999',
+		url: '/api/user/999999',
 	});
 	t.equal(res.statusCode, 404, 'Non-existent user => 404');
 	t.match(JSON.parse(res.payload).error, /not found/i);
@@ -210,13 +210,13 @@ t.test('Test 9: GET /user/:id (Non-existent) => returns 404', async t => {
 
 t.test('Test 10: PUT /user/:username/update (Positive) => updates password', async t => {
 	const newData = {
-		currentPassword: 'secret',
-		newPassword: 'supersecret',
+		currentPassword: 'Qwerty12',
+		newPassword: 'Qwerty23',
 	};
 
 	const res = await fastify.inject({
 		method: 'PUT',
-		url: '/user/testuser/update',
+		url: '/api/user/testuser/update',
 		headers: { Authorization: `Bearer ${authToken}` },
 		payload: newData,
 	});
@@ -230,13 +230,13 @@ t.test('Test 10: PUT /user/:username/update (Positive) => updates password', asy
 
 t.test('Test 11: PUT /user/:username/update => 401 if wrong currentPassword', async t => {
 	const newData = {
-		currentPassword: 'not-the-right-password',
-		newPassword: 'whatever',
+		currentPassword: 'Qwerty12',
+		newPassword: 'Qwerty12',
 	};
 
 	const res = await fastify.inject({
 		method: 'PUT',
-		url: '/user/testuser/update',
+		url: '/api/user/testuser/update',
 		headers: { Authorization: `Bearer ${authToken}` },
 		payload: newData,
 	});
@@ -249,20 +249,20 @@ t.test('Test 11: PUT /user/:username/update => 401 if wrong currentPassword', as
 // TEST 12: updateUser => 400 if new username already exists
 
 t.test('Test 12: PUT /user/:username/update => 400 duplicate newUsername', async t => {
-	const userA = { username: 'userA', password: 'passA', email: 'userA@aaa.aaa' };
-	const userB = { username: 'userB', password: 'passB', email: 'userB@aaa.aaa' };
+	const userA = { username: 'userA', password: 'Qwerty12', email: 'userA@aaa.aaa' };
+	const userB = { username: 'userB', password: 'Qwerty12', email: 'userB@aaa.aaa' };
 
 	// Register both:
 	const regA = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: '/api/user/register',
 		payload: userA,
 	});
 	t.equal(regA.statusCode, 200, 'User A registration ok');
 
 	const regB = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: '/api/user/register',
 		payload: userB,
 	});
 	t.equal(regB.statusCode, 200, 'User B registration ok');
@@ -270,7 +270,7 @@ t.test('Test 12: PUT /user/:username/update => 400 duplicate newUsername', async
 	// Login as userB
 	const loginB = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
+		url: '/api/user/login',
 		payload: userB,
 	});
 	t.equal(loginB.statusCode, 200, 'User B login ok');
@@ -279,9 +279,9 @@ t.test('Test 12: PUT /user/:username/update => 400 duplicate newUsername', async
 	// Attempt to rename userB => userA
 	const updateRes = await fastify.inject({
 		method: 'PUT',
-		url: '/user/userB/update',
+		url: '/api/user/userB/update',
 		headers: { Authorization: `Bearer ${tokenB}` },
-		payload: { currentPassword: 'passB', newUsername: 'userA' },
+		payload: { currentPassword: 'Qwerty12', newUsername: 'userA' },
 	});
 	t.equal(updateRes.statusCode, 400, '400 for duplicate new username');
 	t.match(JSON.parse(updateRes.payload).error, /already exists/i);
@@ -294,8 +294,8 @@ t.test('Test 15: uploadAvatar => checks for invalid mime, size limit, param mism
 	// Re-login testuser w/ new password from test #10
 	const loginAgain = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
-		payload: { username: 'testuser', password: 'supersecret' },
+		url: '/api/user/login',
+		payload: { username: 'testuser', password: 'Qwerty23' },
 	});
 	t.equal(loginAgain.statusCode, 200, 'Re-login success');
 	const testuserToken = JSON.parse(loginAgain.payload).token;
@@ -309,7 +309,7 @@ t.test('Test 15: uploadAvatar => checks for invalid mime, size limit, param mism
 		});
 		const invalidRes = await fastify.inject({
 			method: 'PUT',
-			url: '/user/testuser/upload_avatar',
+			url: '/api/user/testuser/upload_avatar',
 			headers: { ...form.getHeaders(), Authorization: `Bearer ${testuserToken}`, },
 			payload: await form.getBuffer(),
 		});
@@ -349,7 +349,7 @@ t.test('Test 15: uploadAvatar => checks for invalid mime, size limit, param mism
 		});
 		const mismatchRes = await fastify.inject({
 			method: 'PUT',
-			url: '/user/SomeOtherUser/upload_avatar',
+			url: '/api/user/SomeOtherUser/upload_avatar',
 			headers: { ...form.getHeaders(), Authorization: `Bearer ${testuserToken}`, },
 			payload: await form.getBuffer(),
 		});
@@ -370,7 +370,7 @@ t.test('Test 15: uploadAvatar => checks for invalid mime, size limit, param mism
 		});
 		const successRes = await fastify.inject({
 			method: 'PUT',
-			url: '/user/testuser/upload_avatar',
+			url: '/api/user/testuser/upload_avatar',
 			headers: { ...form.getHeaders(), Authorization: `Bearer ${testuserToken}`, },
 			payload: await form.getBuffer(),
 		});
@@ -388,7 +388,7 @@ t.test('Test 16: getUserAvatar => 404 not found user, 200 existing user', async 
 	// 404 if user not found
 	const notFoundRes = await fastify.inject({
 		method: 'GET',
-		url: '/user/NoSuchUser/avatar',
+		url: '/api/user/NoSuchUser/avatar',
 	});
 	t.equal(notFoundRes.statusCode, 404, '404 if user not found');
 	t.match(JSON.parse(notFoundRes.payload).error, /User not found/i);
@@ -396,7 +396,7 @@ t.test('Test 16: getUserAvatar => 404 not found user, 200 existing user', async 
 	// 200 for existing testuser (assuming the file is physically present & fastify-static is configured)
 	const avatarRes = await fastify.inject({
 		method: 'GET',
-		url: '/user/testuser/avatar',
+		url: '/api/user/testuser/avatar',
 	});
 	t.equal(avatarRes.statusCode, 200, 'Returns 200 if user + avatar is found');
 	t.end();
@@ -409,8 +409,8 @@ t.test('Test 17: removeAvatar => param mismatch vs success', async t => {
 	// Re-login to ensure a valid token
 	const loginAgain = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
-		payload: { username: 'testuser', password: 'supersecret' },
+		url: '/api/user/login',
+		payload: { username: 'testuser', password: 'Qwerty23' },
 	});
 	t.equal(loginAgain.statusCode, 200, 'Login again success');
 	const testuserToken = JSON.parse(loginAgain.payload).token;
@@ -418,7 +418,7 @@ t.test('Test 17: removeAvatar => param mismatch vs success', async t => {
 	// Mismatch
 	const mismatchRes = await fastify.inject({
 		method: 'PUT',
-		url: '/user/NotTestuser/remove_avatar',
+		url: '/api/user/NotTestuser/remove_avatar',
 		headers: { Authorization: `Bearer ${testuserToken}` },
 	});
 	t.equal(mismatchRes.statusCode, 400, '400 mismatch');
@@ -427,7 +427,7 @@ t.test('Test 17: removeAvatar => param mismatch vs success', async t => {
 	// Success
 	const removeRes = await fastify.inject({
 		method: 'PUT',
-		url: '/user/testuser/remove_avatar',
+		url: '/api/user/testuser/remove_avatar',
 		headers: { Authorization: `Bearer ${testuserToken}` },
 	});
 	t.equal(removeRes.statusCode, 200, '200 success remove');
@@ -442,8 +442,8 @@ t.test('Test 18: logout user', async t => {
 	// login to ensure a valid token
 	const loginA = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
-		payload: { username: 'testuser', password: 'supersecret' },
+		url: '/api/user/login',
+		payload: { username: 'testuser', password: 'Qwerty23' },
 	});
 	t.equal(loginA.statusCode, 200, 'Login again success');
 	const testuserToken = JSON.parse(loginA.payload).token;
@@ -451,7 +451,7 @@ t.test('Test 18: logout user', async t => {
 	// logout with a wrong token
 	const wrongToken = await fastify.inject({
 		method: 'POST',
-		url: '/user/logout',
+		url: '/api/user/logout',
 		headers: { Authorization: `Bearer wrongToken` },
 	})
 	t.equal(wrongToken.statusCode, 401, 'invalid token')
@@ -460,7 +460,7 @@ t.test('Test 18: logout user', async t => {
 	// logout userA
 	let logoutA = await fastify.inject({
 		method: 'POST',
-		url: '/user/logout',
+		url: '/api/user/logout',
 		headers: { Authorization: `Bearer ${testuserToken}` },
 	})
 	t.equal(logoutA.statusCode, 200, 'userA logged out')
@@ -469,7 +469,7 @@ t.test('Test 18: logout user', async t => {
 	// logout userA with the same token of previous logout that should have been blacklisted
 	logoutA = await fastify.inject({
 		method: 'POST',
-		url: '/user/logout',
+		url: '/api/user/logout',
 		headers: { Authorization: `Bearer ${testuserToken}` },
 	})
 	t.equal(logoutA.statusCode, 401, 'userA cannot use a revoked token')
@@ -491,7 +491,7 @@ t.test('/verify_2fa_code', async t => {
 		})
 		const verifyCode = await fastify.inject({
 			method: 'POST',
-			url: '/verify_2fa_code',
+			url: '/api/verify_2fa_code',
 			payload: { code: code, username: 'testuser'}
 		})
 		t.equal(verifyCode.statusCode, 200, '2FA verification succeeded')
@@ -502,14 +502,14 @@ t.test('/verify_2fa_code', async t => {
 	}
 	const wrongCode = await fastify.inject({
 		method: 'POST',
-		url: '/verify_2fa_code',
+		url: '/api/verify_2fa_code',
 		payload: { code: '000000', username: 'testuser'}
 	})
 	t.equal(wrongCode.statusCode, 401, 'Invalid 2FA code')
 
 	const wrongUsername = await fastify.inject({
 		method: 'POST',
-		url: '/verify_2fa_code',
+		url: '/api/verify_2fa_code',
 		payload: { code: code, username: 'wronguser'}
 	})
 	t.equal(wrongUsername.statusCode, 400, 'Invalid username')
@@ -525,7 +525,7 @@ t.test('/verify_2fa_code', async t => {
 		})
 		const verifyCode = await fastify.inject({
 			method: 'POST',
-			url: '/verify_2fa_code',
+			url: '/api/verify_2fa_code',
 			payload: { code: code, username: 'testuser'}
 		})
 		t.equal(verifyCode.statusCode, 401, '2FA code expired')

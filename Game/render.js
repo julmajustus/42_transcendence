@@ -1,3 +1,5 @@
+import '@fontsource/press-start-2p';
+
 const MessageType = {
 	JOIN_MULTI: "join_multi",
 	JOIN_SINGLE: "join_single",
@@ -22,22 +24,25 @@ const DEFAULT_HEIGHT = 600;
 
 export class GameRenderer {
 	constructor(
-		server_uri,
-		server_port,
 		game_id,
 		user_token,
 		document,
 		game_type,
-		// wsUrl = null
 	) {
-		this.server_uri = server_uri;
 		this.game_id = game_id;
 		this.user_token = user_token;
-/* 		const websocketUrl =
-			wsUrl ||
-			`ws://${server_uri}:${server_port}/ws/game/${game_id}?token=${authToken}`;
-		this.socket = new WebSocket(websocketUrl); */
-		this.socket = new WebSocket(`ws://${server_uri}:${server_port}/${GAME_ENDPOINT}`);
+
+		// somewhere in your constants or socket-init file
+		const WS_PATH = `/ws/${GAME_ENDPOINT}`;
+
+		// pick the right WS protocol based on page protocol
+		const WS_PROTO = location.protocol === 'https:' ? 'wss' : 'ws';
+
+		// Build your socket URL against the same origin
+		const WS_URL = `${WS_PROTO}://${location.host}${WS_PATH}`;
+
+		// Usage
+		this.socket = new WebSocket(WS_URL);
 		this.connected = false;
 
 		// game
@@ -204,46 +209,65 @@ export class GameRenderer {
 		this.ctx.fill();
 	}
 
+	drawUsernames(players) {
+		this.ctx.fillStyle = WHITE;
+		this.ctx.font = "15px 'Press Start 2P'";
+		this.ctx.fillText(players[0].username, this.board_width / 4, 30);
+		this.ctx.fillText(players[1].username, this.board_width * (3/4), 30);
+	}
+
 	drawScores(players) {
 		this.ctx.fillStyle = WHITE;
-		this.ctx.font = "48px serif";
-		this.ctx.fillText(players[0].score, this.board_width / 4, 50);
-		this.ctx.fillText(players[1].score, this.board_width * (3/4), 50);
+		this.ctx.font = "30px 'Press Start 2P'";
+		this.ctx.fillText(players[0].score, this.board_width / 4, 70);
+		this.ctx.fillText(players[1].score, this.board_width * (3/4), 70);
 	}
 
 	drawWaitingForPlayers(players) {
 		this.ctx.fillStyle = WHITE;
-		this.ctx.font = "40px serif";
+		this.ctx.font = "30px 'Press Start 2P'";
 		this.ctx.textAlign = "center"
 		this.ctx.fillText("Waiting for players", this.board_width / 2, this.board_height / 2);
 
-		this.ctx.font = "20px serif";
-		this.ctx.fillText("Press UP and DOWN to confirm", this.board_width / 2, this.board_height / 2 + 30);
+		this.ctx.font = "15px 'Press Start 2P'";
+		this.ctx.fillText("In a best of 5 rounds, the first to 3 wins", this.board_width / 2, this.board_height / 2 + 30);
 
-		this.ctx.font = "30px serif";
+		if (this.game_type === 'multi') {
+			this.ctx.font = "15px 'Press Start 2P'";
+			this.ctx.fillText("Press UP and DOWN to confirm", this.board_width / 2, this.board_height / 2 + 100);
+		}
+		if (this.game_type === 'single') {
+			this.ctx.font = "15px 'Press Start 2P'";
+			this.ctx.fillText("Press W and S to confirm", this.board_width / 4, this.board_height / 2 + 100);
+			this.ctx.fillText("Press UP and DOWN to confirm", this.board_width * 3 / 4, this.board_height / 2 + 100);
+		}
+
+		this.ctx.font = "15px Press Start 2P";
 		if (players[0].ready) {
-			this.ctx.fillText("Player 1 READY", this.board_width / 4, this.board_height * 0.75);
+			this.ctx.fillText(`Player ${players[0].username} READY`, this.board_width / 4, this.board_height * 0.75);
 		}
 		else {
-			this.ctx.fillText("Waiting for Player 1", this.board_width / 4, this.board_height * 0.75);
+			this.ctx.fillText(`Waiting for Player`, this.board_width / 4, this.board_height * 0.75);
+			this.ctx.fillText(`${players[0].username}`, this.board_width / 4, this.board_height * 0.8);
 		}
 		if (players[1].ready) {
-			this.ctx.fillText("Player 2 READY", this.board_width * 0.75, this.board_height * 0.75);
+			this.ctx.fillText(`Player ${players[1].username} READY`, this.board_width * 0.75, this.board_height * 0.75);
 		}
 		else {
-			this.ctx.fillText("Waiting for Player 2", this.board_width * 0.75, this.board_height * 0.75);
+			this.ctx.fillText(`Waiting for Player`, this.board_width * 0.75, this.board_height * 0.75);
+			this.ctx.fillText(`${players[1].username}`, this.board_width * 0.75, this.board_height * 0.8);
 		}
 
 	}
 	drawRemainingTimout(timeout) {
 		this.ctx.fillStyle = WHITE;
-		this.ctx.font = "40px serif";
+		this.ctx.font = "30px 'Press Start 2P'";
 		this.ctx.textAlign = "center"
 		this.ctx.fillText(`Resetting in ${timeout}...`, this.board_width / 2, this.board_height / 2);
 	}
 
 	drawResult(winner) {
-		this.ctx.font = "40px serif";
+		this.ctx.font = "20px 'Press Start 2P'";
 		this.ctx.textAlign = "center"
 		let text;
 		if (winner == null) {
@@ -251,13 +275,10 @@ export class GameRenderer {
 		}
 		else {
 			if (this.game_type === "multi") {
-				// Todo: Display nickname instead of id
-				text = `Player ${winner.id} won the game`;
+				text = `${winner.username} won the game`;
 			}
 			if (this.game_type === "single") {
-				// Hacky, single player ids are -1 and -2, i.e. somthing that's not a real id
-				// text = `Player ${winner.id * -1} won the game`;
-				text = `Player ${winner.id} won the game`;
+				text = `${winner.username} won the game`;
 			}
 		}
 		this.ctx.fillText(text, this.board_width / 2, this.board_height / 2);
@@ -275,12 +296,13 @@ export class GameRenderer {
 
 	drawWaitingForConnection() {
 		this.ctx.fillStyle = WHITE;
-		this.ctx.font = "40px serif";
+		this.ctx.font = "30px 'Press Start 2P'";
 		this.ctx.textAlign = "center"
 		this.ctx.fillText("Waiting for connection...", this.board_width / 2, this.board_height / 2);
 	}
 
 	renderGame() {
+		this.drawUsernames(this.state.players)
 		this.drawScores(this.state.players);
 		if (this.state.game_state === "not_started") {
 			this.drawWaitingForPlayers(this.state.players);

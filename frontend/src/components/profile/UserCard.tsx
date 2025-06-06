@@ -43,10 +43,21 @@ const Username = styled.h3`
   color: #333;
 `;
 
-const Status = styled.span<{ online: boolean }>`
+/* const Status = styled.span<{ online: boolean }>`
   font-size: 0.9rem;
   color: ${({ online }) => (online ? '#4caf50' : '#999')};
 `;
+ */
+
+const Status = styled.span<{ $status: 'online' | 'away' | 'offline' }>`
+  font-size: 0.9rem;
+  color: ${({ $status }) =>
+    $status === 'online'  ? '#4caf50'   // green
+  : $status === 'away'    ? '#FFA000'   // dark yellow
+                          : '#999'      // grey
+  };
+`;
+
 
 const UserCard: React.FC<UserCardProps> = ({
   id,
@@ -61,7 +72,14 @@ const UserCard: React.FC<UserCardProps> = ({
       <Avatar src={avatar} alt={`${username}'s avatar`} online={isOnline} />
       <UserInfo>
         <Username>{username}</Username>
-        <Status online={isOnline}>{isOnline ? 'Online' : 'Offline'}</Status>
+        {/* <Status online={isOnline}>{isOnline ? 'Online' : 'Offline'}</Status> */}
+        <Status $status={online_status as 'online' | 'away' | 'offline'}>
+          {online_status === 'online'
+            ? 'Online'
+            : online_status === 'away'
+            ? 'Away'
+            : 'Offline'}
+        </Status>
       </UserInfo>
     </Card>
   );

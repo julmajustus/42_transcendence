@@ -24,14 +24,14 @@ t.before(async () => {
 });
 
 t.test('add/remove friends tests', async t => {
-	const userA = { username: 'userA', password: 'passA', email: 'aaa@aaa.aaa'};
-	const userB = { username: 'userB', password: 'passB', email: 'bbb@bbb.bbb' };
-	const userC = { username: 'userC', password: 'passC', email: 'ccc@ccc.ccc' };
+	const userA = { username: 'userA', password: 'Qwerty23', email: 'aaa@aaa.aaa'};
+	const userB = { username: 'userB', password: 'Qwerty23', email: 'bbb@bbb.bbb' };
+	const userC = { username: 'userC', password: 'Qwerty23', email: 'ccc@ccc.ccc' };
 
 	// register userA
 	const regA = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: 'api/user/register',
 		payload: userA,
 	});
 	const userAId = JSON.parse(regA.payload).id;
@@ -40,7 +40,7 @@ t.test('add/remove friends tests', async t => {
 	// register userB
 	const regB = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: 'api/user/register',
 		payload: userB,
 	});
 	const userBId = JSON.parse(regB.payload).id;
@@ -48,7 +48,7 @@ t.test('add/remove friends tests', async t => {
 	// register userC
 	const regC = await fastify.inject({
 		method: 'POST',
-		url: '/user/register',
+		url: 'api/user/register',
 		payload: userC,
 	});
 	const userCId = JSON.parse(regC.payload).id;
@@ -56,7 +56,7 @@ t.test('add/remove friends tests', async t => {
 	// login userA
 	const loginA = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
+		url: 'api/user/login',
 		payload: userA,
 	});
 	const tokenA = JSON.parse(loginA.payload).token;
@@ -64,7 +64,7 @@ t.test('add/remove friends tests', async t => {
 	// add userB as friend to userA
 	const friend1 = await fastify.inject({
 		method: 'POST',
-		url: '/add_friend',
+		url: 'api/add_friend',
 		headers: { Authorization: `Bearer ${tokenA}` },
 		payload: { user_id: userAId, friend_id: userBId },
 	});
@@ -73,14 +73,14 @@ t.test('add/remove friends tests', async t => {
 	// add userC as friend to userA
 	const friend2 = await fastify.inject({
 		method: 'POST',
-		url: '/add_friend',
+		url: 'api/add_friend',
 		headers: { Authorization: `Bearer ${tokenA}` },
 		payload: { user_id: userAId, friend_id: userCId },
 	});
 	t.equal(friend2.statusCode, 200, 'friend added succesfully')
 	let users = await fastify.inject({
 		method: 'GET',
-		url: `/user/${userAUsername}/friends`
+		url: `api/user/${userAUsername}/friends`
 	})
 	let friends = JSON.parse(users.payload)
 	t.equal(friends.length, 2, 'userA should have 2 friends')
@@ -92,7 +92,7 @@ t.test('add/remove friends tests', async t => {
 	// adding a non existing friend
 	const nonExistingFriend = await fastify.inject({
 		method: 'POST',
-		url: '/add_friend',
+		url: 'api/add_friend',
 		headers: { Authorization: `Bearer ${tokenA}` },
 		payload: { user_id: userAId, friend_id: '9999' },
 	});
@@ -103,12 +103,12 @@ t.test('add/remove friends tests', async t => {
 	let friendshipId = friendsBefore[0].friendshipId
 	let removedFriend = await fastify.inject({
 		method: 'DELETE',
-		url: `/remove_friend/${friendshipId}`,
+		url: `api/remove_friend/${friendshipId}`,
 		headers: { Authorization: `Bearer ${tokenA}` },
 	})
 	let usersAfter = await fastify.inject({
 		method: 'GET',
-		url: `/user/${userAUsername}/friends`
+		url: `api/user/${userAUsername}/friends`
 	})
 	let friendsAfter = JSON.parse(usersAfter.payload)
 	t.equal(removedFriend.statusCode, 200, 'friend removed successfully')
@@ -118,7 +118,7 @@ t.test('add/remove friends tests', async t => {
 	// login userB
 	const loginB = await fastify.inject({
 		method: 'POST',
-		url: '/user/login',
+		url: 'api/user/login',
 		payload: userB,
 	});
 	const tokenB = JSON.parse(loginB.payload).token;
@@ -127,7 +127,7 @@ t.test('add/remove friends tests', async t => {
 	friendshipId = JSON.parse(users.payload)[0].id
 	removedFriend = await fastify.inject({
 		method: 'DELETE',
-		url: `/remove_friend/${friendshipId}`,
+		url: `api/remove_friend/${friendshipId}`,
 		headers: { Authorization: `Bearer ${tokenB}` },
 	})
 	t.equal(removedFriend.statusCode, 400, 'not able to remove a friend from another user')
@@ -135,7 +135,7 @@ t.test('add/remove friends tests', async t => {
 	// trying to add userB as friend of userA with userB login token
 	const selfMadeFriend = await fastify.inject({
 		method: 'POST',
-		url: '/add_friend',
+		url: 'api/add_friend',
 		headers: { Authorization: `Bearer ${tokenB}` },
 		payload: { user_id: userAId, friend_id: userBId },
 	});
@@ -149,24 +149,24 @@ t.test('add/remove friends tests', async t => {
 		const email = `${current_username}@gmail.com`
 		await fastify.inject({
 			method: 'POST',
-			url: '/user/register',
+			url: 'api/user/register',
 			payload: {
 				username: current_username,
-				password: 'passA',
+				password: 'Qwerty23',
 				email: email,
 			}
 		});
 
 		await fastify.inject({
 			method: 'POST',
-			url: '/add_friend',
+			url: 'api/add_friend',
 			headers: { Authorization: `Bearer ${tokenA}` },
 			payload: { user_id: userAId, friend_id: i },
 		});
 	}
 	const limitedList = await fastify.inject({
 		method: 'GET',
-		url: `/user/${userAUsername}/friends`
+		url: `api/user/${userAUsername}/friends`
 	})
 	t.equal(JSON.parse(limitedList.payload).length, 10, 'limit of 10 for each page ok')
 })
