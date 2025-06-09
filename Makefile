@@ -19,19 +19,19 @@ logs:
 
 backend-logs:
 	@echo "$(YELLOW)View output from backend container$(RESET)"
-	docker logs 42_transcendence-backend-1
+	docker logs backend
 
 frontend-logs:
 	@echo "$(YELLOW)View output from frontend container$(RESET)"
-	docker logs 42_transcendence-frontend-1
+	docker logs frontend
 
 nginx-logs:
 	@echo "$(YELLOW)View output from nginx container$(RESET)"
-	docker logs ft_nginx
+	docker logs nginx
 
 db:
 	@echo "$(YELLOW)Database$(RESET)"
-	docker exec -it 42_transcendence-sqlite-1 sqlite3 database.sqlite
+	docker exec -it sqlite sqlite3 database.sqlite
 
 stop:
 	@echo "$(YELLOW)Stop and remove containers, networks$(RESET)"

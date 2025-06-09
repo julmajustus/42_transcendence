@@ -3,6 +3,7 @@ services:
     build:
       context: ./SQLite
       dockerfile: Dockerfile
+    container_name: sqlite
     volumes:
       - sqlite-data:/data
 
@@ -10,6 +11,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: backend
     volumes:
       - sqlite-data:/data
       - avatar-uploads:/app/uploads/avatars
@@ -24,6 +26,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: frontend
     volumes:
       - ./frontend:/app
       - ./Game:/app/Game
@@ -37,7 +40,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    container_name: ft_nginx
+    container_name: nginx
     ports:
       - "8443:8443"
     depends_on:
